@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RestauranteIntecapWeb_MLMG.Models
 {
-    // Clase que representa la tabla 'roles' en SQL Server
+    // Tabla Roles
     [Table("roles")]
     public class Rol
     {
@@ -20,7 +20,7 @@ namespace RestauranteIntecapWeb_MLMG.Models
         public int max_almuerzos { get; set; } = 2;
     }
 
-    // Clase que representa la tabla 'usuarios'
+    // Tabla Usuarios
     [Table("usuarios")]
     public class Usuario
     {
@@ -39,24 +39,20 @@ namespace RestauranteIntecapWeb_MLMG.Models
         [StringLength(255)]
         public string password { get; set; } = null!;
 
-
-
-        [StringLength(20)]
-        public string nit_facturacion { get; set; } = "C/F";
-
-
-
         public int rol_id { get; set; }
 
         public bool activo { get; set; } = true;
 
         public DateTime fecha_creacion { get; set; } = DateTime.Now;
 
+        [StringLength(20)]
+        public string nit_facturacion { get; set; } = "C/F";
+
         [ForeignKey("rol_id")]
         public virtual Rol? Rol { get; set; }
     }
 
-    // Clase que representa la tabla 'formas_pago'
+    // Tabla Formas de Pago
     [Table("formas_pago")]
     public class FormaPago
     {
@@ -68,7 +64,7 @@ namespace RestauranteIntecapWeb_MLMG.Models
         public string nombre { get; set; } = null!;
     }
 
-    // Clase que representa la tabla 'menu_diario' (Clave para el Módulo de Cocina)
+    // Tabla Menú Diario
     [Table("menu_diario")]
     public class MenuDiario
     {
@@ -82,7 +78,6 @@ namespace RestauranteIntecapWeb_MLMG.Models
         [StringLength(1000)]
         public string? descripcion { get; set; }
 
-        [Column(TypeName = "decimal(10,2)")]
         public decimal precio { get; set; }
 
         public int stock { get; set; }
@@ -92,7 +87,6 @@ namespace RestauranteIntecapWeb_MLMG.Models
         [StringLength(255)]
         public string? imagen_url { get; set; }
 
-        [DataType(DataType.Date)]
         public DateTime fecha { get; set; }
 
         public bool es_dieta { get; set; } = false;
@@ -102,7 +96,7 @@ namespace RestauranteIntecapWeb_MLMG.Models
         public string estado { get; set; } = "Disponible";
     }
 
-    // Clase que representa la tabla 'reservas'
+    // Tabla Reservas
     [Table("reservas")]
     public class Reserva
     {
@@ -123,7 +117,6 @@ namespace RestauranteIntecapWeb_MLMG.Models
 
         public DateTime fecha_reserva { get; set; } = DateTime.Now;
 
-        [DataType(DataType.Date)]
         public DateTime fecha_consumo { get; set; }
 
         [Required]
@@ -141,5 +134,20 @@ namespace RestauranteIntecapWeb_MLMG.Models
 
         [ForeignKey("forma_pago_id")]
         public virtual FormaPago? FormaPago { get; set; }
+    }
+
+    // Tabla Historial Login
+    [Table("historial_login")]
+    public class HistorialLogin
+    {
+        [Key]
+        public int id { get; set; }
+
+        public int usuario_id { get; set; }
+
+        public DateTime fecha_login { get; set; } = DateTime.Now;
+
+        [ForeignKey("usuario_id")]
+        public virtual Usuario? Usuario { get; set; }
     }
 }

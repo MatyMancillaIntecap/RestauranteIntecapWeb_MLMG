@@ -3,20 +3,28 @@ using RestauranteIntecapWeb_MLMG.Models;
 
 namespace RestauranteIntecapWeb_MLMG.Data
 {
-    // Clase principal de contexto de Entity Framework que gestiona la base de datos
     public class ApplicationDbContext : DbContext
     {
-        // Constructor que recibe las opciones de configuración (como la cadena de conexión)
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        // Definición de las colecciones que representan cada tabla en SQL Server
-        public DbSet<Rol> Roles { get; set; }
-        public DbSet<Usuario> Usuarios { get; set; }
-        public DbSet<FormaPago> FormasPago { get; set; }
-        public DbSet<MenuDiario> MenusDiarios { get; set; }
-        public DbSet<Reserva> Reservas { get; set; }
+        // Declaración de las tablas mapeadas en la base de datos Intecap_proy_Rest_m
+        public DbSet<Rol> Roles { get; set; } = null!;
+        public DbSet<Usuario> Usuarios { get; set; } = null!;
+        public DbSet<FormaPago> FormasPago { get; set; } = null!;
+        public DbSet<MenuDiario> MenusDiarios { get; set; } = null!;
+        public DbSet<Reserva> Reservas { get; set; } = null!;
+        public DbSet<HistorialLogin> HistorialLogins { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Rol>().ToTable("roles");
+            modelBuilder.Entity<Usuario>().ToTable("usuarios");
+            modelBuilder.Entity<FormaPago>().ToTable("formas_pago");
+            modelBuilder.Entity<MenuDiario>().ToTable("menu_diario");
+            modelBuilder.Entity<Reserva>().ToTable("reservas");
+            modelBuilder.Entity<HistorialLogin>().ToTable("historial_login");
+        }
     }
 }

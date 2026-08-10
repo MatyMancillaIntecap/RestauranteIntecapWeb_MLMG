@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using RestauranteIntecapWeb_MLMG.Data;
 using RestauranteIntecapWeb_MLMG.Services;
+
 
 namespace RestauranteIntecapWeb_MLMG
 {
@@ -12,15 +14,24 @@ namespace RestauranteIntecapWeb_MLMG
 
             builder.Services.AddControllersWithViews();
 
-            // Configuración del DbContext con SQL Server LocalDB
+            // Configurar la conexión a SQL Server
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSQL")));
 
-            // Registro del Servicio de Cocina
+            // Registrar los servicios de la aplicación
             builder.Services.AddScoped<ICocinaService, CocinaService>();
-
-            // Registrar el Servicio de Empleados
             builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
+            builder.Services.AddScoped<IAdminService, AdminService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
+            // Configurar Autenticación basada en Cookies
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Account/AccesoDenegado";
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8); // Duración del pase de entrada
+                });
 
             var app = builder.Build();
 
@@ -33,11 +44,14 @@ namespace RestauranteIntecapWeb_MLMG
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-            app.UseAuthorization();
+
+            // Habilitar Seguridad
+            app.UseAuthentication(); // Reconoce quién es el usuario
+            app.UseAuthorization();  // Verifica qué permisos tiene
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Cocina}/{action=Index}/{id?}");
+                pattern: "{controller=Account}/{action=Login}/{id?}");
 
             app.Run();
         }

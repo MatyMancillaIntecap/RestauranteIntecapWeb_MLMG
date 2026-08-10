@@ -1,0 +1,239 @@
+﻿@model IEnumerable<RestauranteIntecapWeb_MLMG.Models.DTOs.UsuarioAdminDTO>
+@using RestauranteIntecapWeb_MLMG.Models
+
+@{
+    ViewData["Title"] = "Gestión de Usuarios - Administrador";
+    var roles = ViewBag.Roles as List<Rol> ?? new List<Rol>();
+}
+
+<div class="container-fluid mt-3 mb-5">
+<!-- BARRA SUPERIOR -->
+<div class="card shadow-sm border-0 mb-4 rounded-3">
+    <div class="card-body bg-light p-3">
+        <div class="row align-items-center">
+            <div class="col-md-6 col-12">
+                <h3 class="text-primary fw-bold mb-1">⚙️ Gestión General de Usuarios</h3>
+                <p class="text-muted mb-0">Administra accesos, roles, estados activos/inactivos, límites de platillos y NITs del personal.</p>
+            </div>
+            <div class="col-md-6 col-12 text-md-end mt-2 mt-md-0 d-flex gap-2 justify-content-md-end flex-wrap">
+                <a asp-action="DescargarUsuariosExcel" class="btn btn-success fw-bold">
+                    📊 Exportar Excel
+                </a>
+                <a asp-action="DescargarUsuariosPdf" target="_blank" class="btn btn-danger fw-bold">
+                    📄 Exportar PDF
+                </a>
+                <button class="btn btn-primary fw-bold" onclick="abrirModalNuevoUsuario()">
+                    ➕ Crear Nuevo Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show fw-bold" role="alert">
+            ⚠️ @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show fw-bold" role="alert">
+            ✅ @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- TABLA DE USUARIOS -->
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <!-- ... código anterior del contenedor ... -->
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <!-- 1. ENCABEZADO: Solo títulos -->
+        <thead class="table-light">
+            <tr>
+                <th># ID</th>
+                <th>Nombre Completo</th>
+                <th>Correo Electrónico</th>
+                <th>Rol</th>
+                <th>Límite Almuerzos</th>
+                <th>NIT Facturación</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th> <!-- El título va aquí -->
+            </tr>
+        </thead>
+        
+        <!-- 2. CUERPO: Aquí vive el ciclo y los datos -->
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td><strong>#@user.Id</strong></td>
+                        <td><div class="fw-bold">@user.Nombre</div></td>
+                        <td>@user.Email</td>
+                        <td>
+                            <!-- ... lógica de los badges de roles ... -->
+                            <span class="badge bg-info text-dark">@user.NombreRol</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary fs-6">
+                                @(user.MaxAlmuerzosPermitidos == 0 ? "Ilimitado" : user.MaxAlmuerzosPermitidos + " / día")
+                            </span>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">@user.NitFacturacion</span></td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="sw_@user.Id" checked="@user.Activo" onchange="cambiarEstadoUsuario(@user.Id, this.checked)">
+                                <label class="form-check-label small fw-bold" for="sw_@user.Id">
+                                    @(user.Activo ? "Activo" : "Inactivo")
+                                </label>
+                            </div>
+                        </td>
+                        <!-- LOS BOTONES DEBEN ESTAR AQUÍ ADENTRO DEL FOREACH -->
+                        <td class="text-center">
+                            <a asp-action="DetalleUsuario" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info me-1 fw-bold" title="Ver Ficha Completa">
+                                🔍 Detalle
+                            </a>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="abrirModalEditarUsuario(@user.Id)" title="Editar Usuario">
+                                ✏️ Editar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">No se registran usuarios en el sistema.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- ... código posterior de los modales ... -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CREACIÓN / EDICIÓN DE USUARIO -->
+<div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalTitulo">➕ Crear Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Admin" asp-action="GuardarUsuario" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" id="user_id" name="Id" value="0" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo</label>
+                        <input type="text" id="user_nombre" name="Nombre" class="form-control" placeholder="Ej. Carlos López" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Correo Electrónico</label>
+                        <input type="email" id="user_email" name="Email" class="form-control" placeholder="ejemplo@intecap.com" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <input type="password" id="user_password" name="Password" class="form-control" placeholder="Dejar en blanco para no cambiar en edición" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Rol de Usuario</label>
+                            <select id="user_rol" name="RolId" class="form-select" required>
+                                @foreach (var r in roles)
+                                {
+                                    <option value="@r.id">@r.nombre</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Límite Almuerzos/Día</label>
+                            <input type="number" id="user_max_almuerzos" name="MaxAlmuerzos" class="form-control" min="0" max="50" value="2" required />
+                            <small class="text-muted">Coloque 0 para Ilimitado</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">NIT Predeterminado</label>
+                        <input type="text" id="user_nit" name="NitFacturacion" class="form-control" placeholder="13 dígitos o C/F" value="C/F" />
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="user_activo" name="Activo" value="true" checked>
+                        <label class="form-check-label fw-bold" for="user_activo">Usuario Activo</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold">💾 Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function abrirModalNuevoUsuario() {
+            $('#user_id').val(0);
+            $('#user_nombre').val('');
+            $('#user_email').val('');
+            $('#user_password').val('');
+            $('#user_max_almuerzos').val(2);
+            $('#user_nit').val('C/F');
+            $('#user_activo').prop('checked', true);
+            $('#modalTitulo').text('➕ Crear Usuario');
+
+            var modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+            modal.show();
+        }
+
+        function abrirModalEditarUsuario(id) {
+            $.get('/Admin/ObtenerUsuarioPorId/' + id)
+                .done(function (data) {
+                    $('#user_id').val(data.id);
+                    $('#user_nombre').val(data.nombre);
+                    $('#user_email').val(data.email);
+                    $('#user_password').val('');
+                    $('#user_rol').val(data.rolId);
+                    $('#user_max_almuerzos').val(data.maxAlmuerzos);
+                    $('#user_nit').val(data.nitFacturacion);
+                    $('#user_activo').prop('checked', data.activo);
+                    $('#modalTitulo').text('✏️ Editar Usuario');
+
+                    var modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+                    modal.show();
+                })
+                .fail(function () {
+                    alert('Error al obtener los datos del usuario.');
+                });
+        }
+
+        function cambiarEstadoUsuario(id, activo) {
+            $.post('/Admin/CambiarEstadoUsuario', { id: id, activo: activo })
+                .done(function () {
+                    console.log("Estado de usuario actualizado.");
+                })
+                .fail(function () {
+                    alert("Error al cambiar el estado del usuario.");
+                    location.reload();
+                });
+        }
+    </script>
+}

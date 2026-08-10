@@ -1,0 +1,122 @@
+﻿@model RestauranteIntecapWeb_MLMG.Models.DTOs.DashboardDTO
+
+@{
+    ViewData["Title"] = "Dashboard Administrador";
+}
+
+<div class="container-fluid mt-3 mb-5">
+    <!-- ENCABEZADO CON BOTONES DE ACCIÓN RÁPIDA -->
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-body bg-light p-3">
+            <div class="row align-items-center">
+                <div class="col-md-7 col-12">
+                    <h3 class="text-primary fw-bold mb-1">👨‍💼 Panel de Administración General</h3>
+                    <p class="text-muted mb-0">Métricas en tiempo real, rendimiento de ventas y control del sistema.</p>
+                </div>
+                <div class="col-md-5 col-12 text-md-end mt-2 mt-md-0 d-flex gap-2 justify-md-content-end">
+                    <a asp-action="Usuarios" class="btn btn-primary fw-bold">⚙️ Gestión Usuarios</a>
+                    <a asp-controller="Cocina" asp-action="Index" class="btn btn-dark fw-bold">🍳 Control Cocina</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE INDICADORES EN TIEMPO REAL (KPIS) -->
+    <div class="row mb-4">
+        <!-- Tarjeta 1: Recaudación Monetaria -->
+        <div class="col-xl-3 col-md-6 col-12 mb-3">
+            <div class="card border-0 shadow-sm rounded-3 bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-1">Ventas de Hoy</h6>
+                            <h2 class="fw-bold mb-0">Q @(Model?.TotalMontoRecaudadoHoy.ToString("F2") ?? "0.00")</h2>
+                        </div>
+                        <div class="fs-1">💰</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 2: Reservas del Día -->
+        <div class="col-xl-3 col-md-6 col-12 mb-3">
+            <div class="card border-0 shadow-sm rounded-3 bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-1">Reservas Hoy</h6>
+                            <h2 class="fw-bold mb-0">@(Model?.TotalReservasHoy ?? 0) solicitudes</h2>
+                        </div>
+                        <div class="fs-1">🍽️</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 3: Platillo Más Vendido -->
+        <div class="col-xl-3 col-md-6 col-12 mb-3">
+            <div class="card border-0 shadow-sm rounded-3 bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-dark-50 text-uppercase fw-bold mb-1">Platillo Estrella</h6>
+                            <h5 class="fw-bold mb-0">@(Model?.PlatilloMasVendido ?? "Sin ventas")</h5>
+                        </div>
+                        <div class="fs-1">⭐</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 4: Total Usuarios Registrados -->
+        <div class="col-xl-3 col-md-6 col-12 mb-3">
+            <div class="card border-0 shadow-sm rounded-3 bg-dark text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 text-uppercase fw-bold mb-1">Personal Total</h6>
+                            <h2 class="fw-bold mb-0">@(Model?.TotalUsuarios ?? 0) usuarios</h2>
+                        </div>
+                        <div class="fs-1">👥</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL DE REPORTES Y DESCARGAS GLOBALES -->
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">📄 Reportes Ejecutivos del Sistema</h5>
+        </div>
+        <div class="card-body bg-light">
+            <form method="get" asp-action="DescargarReporteExcel" target="_blank" class="row g-3 align-items-end">
+                <div class="col-md-3 col-6">
+                    <label class="form-label fw-bold small">Fecha Inicio:</label>
+                    <input type="date" name="FechaInicio" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-3 col-6">
+                    <label class="form-label fw-bold small">Fecha Fin:</label>
+                    <input type="date" name="FechaFin" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-3 col-6">
+                    <label class="form-label fw-bold small">Estado Reserva:</label>
+                    <select name="Estado" class="form-select form-select-sm">
+                        <option value="Todos">Todos los estados</option>
+                        <option value="Activa">Activa</option>
+                        <option value="Cancelada">Cancelada</option>
+                        <option value="Entregada">Entregada</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-6 d-flex gap-2">
+                    <button type="submit" class="btn btn-success btn-sm fw-bold w-100">
+                        📊 Exportar Excel
+                    </button>
+                    <button type="submit" asp-action="DescargarReportePdf" class="btn btn-danger btn-sm fw-bold w-100">
+                        📄 Descargar PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
