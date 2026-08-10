@@ -1,0 +1,168 @@
+﻿@* Definimos el modelo fuertemente tipado que esta vista recibe desde el CocinaController *@
+@model IEnumerable<RestauranteIntecapWeb_MLMG.Models.MenuDiario>
+
+@{
+    ViewData["Title"] = "Gestión de Menú Diario - Cocina";
+}
+
+<!-- Encabezado principal del módulo adaptado para pantallas móviles y escritorio -->
+<div class="container-fluid mt-3">
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-8 col-12">
+            <h2 class="text-primary fw-bold">🍳 Menú del Día - Área de Cocina</h2>
+            <p class="text-muted mb-0">Publica los platillos disponibles y gestiona el stock diario del restaurante.</p>
+        </div>
+        <div class="col-md-4 col-12 text-md-end mt-2 mt-md-0">
+            <span class="badge bg-info text-dark fs-6">
+                Fecha: @DateTime.Today.ToString("dd/MM/yyyy")
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- SECCIÓN 1: FORMULARIO DE REGISTRO DE NUEVO PLATILLO -->
+        <div class="col-lg-4 col-12 mb-4">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-primary text-white font-weight-bold">
+                    <h5 class="mb-0">➕ Publicar Nueva Opción</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Formulario multipart para permitir el envío binario de la fotografía -->
+                    <form asp-controller="Cocina" asp-action="GuardarMenu" method="post" enctype="multipart/form-data">
+
+                        <!-- Token de seguridad CSRF generado por Razor -->
+                        @Html.AntiForgeryToken()
+
+                        <!-- Campo: Nombre del plato -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombre del Platillo</label>
+                            <input type="text" name="nombre_plato" class="form-control" placeholder="Ej. Pollo en crema" required />
+                        </div>
+
+                        <!-- Campo: Descripción opcional -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción</label>
+                            <textarea name="descripcion" class="form-control" rows="2" placeholder="Detalles de preparación..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <!-- Campo: Precio en Quetzales -->
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold">Precio (Q)</label>
+                                <input type="number" step="0.01" name="precio" class="form-control" placeholder="20.00" required />
+                            </div>
+
+                            <!-- Campo: Stock inicial -->
+                            <div class="col-6 mb-3">
+                                <label class="form-label fw-bold">Stock Inicial</label>
+                                <input type="number" name="stock" class="form-control" placeholder="150" required />
+                            </div>
+                        </div>
+
+                        <!-- Campo: Opciones de dieta y fecha -->
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="es_dieta" value="true" id="chkDieta">
+                                    <input type="hidden" name="es_dieta" value="false" />
+                                    <label class="form-check-label" for="chkDieta">Es Dieta</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <input type="date" name="fecha" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                            </div>
+                        </div>
+
+                        <!-- Campo: Subida de archivo de imagen -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Fotografía del Platillo</label>
+                            <input type="file" name="imagenFile" class="form-control" accept="image/*" />
+                        </div>
+
+                        <!-- Estado predeterminado -->
+                        <input type="hidden" name="estado" value="Disponible" />
+
+                        <!-- Botón de envío -->
+                        <button type="submit" class="btn btn-success w-100 fw-bold">
+                            💾 Publicar Menú
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: TABLA RESPONSIVE DE PLATILLOS PROGRAMADOS PARA HOY -->
+        <div class="col-lg-8 col-12">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">📋 Platillos Registrados para Hoy</h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- table-responsive asegura desplazamiento horizontal suave en smartphones -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Imagen</th>
+                                    <th>Platillo</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Solicitados</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null && Model.Any())
+                                {
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(item.imagen_url))
+                                                {
+                                                    <img src="@item.imagen_url" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" alt="@item.nombre_plato" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Sin Foto</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold">@item.nombre_plato</div>
+                                                @if (item.es_dieta)
+                                                {
+                                                    <span class="badge bg-info text-dark">🥗 Dieta</span>
+                                                }
+                                            </td>
+                                            <td>Q @item.precio.ToString("F2")</td>
+                                            <td><span class="badge bg-primary fs-6">@item.stock</span></td>
+                                            <td><span class="badge bg-warning text-dark fs-6">@item.cantidad_solicitada</span></td>
+                                            <td>
+                                                @if (item.estado == "Disponible")
+                                                {
+                                                    <span class="badge bg-success">Disponible</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">@item.estado</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            No hay platillos registrados para el día de hoy. Utiliza el formulario lateral para agregar el menú.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
