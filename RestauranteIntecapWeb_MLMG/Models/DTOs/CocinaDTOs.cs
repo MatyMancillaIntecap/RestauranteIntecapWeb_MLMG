@@ -1,8 +1,6 @@
 ﻿namespace RestauranteIntecapWeb_MLMG.Models.DTOs
 {
-
-    //DTO ES UN DATA TRANSFER OBJECT, ES DECIR, UN OBJETO QUE SE UTILIZA PARA TRANSFERIR DATOS ENTRE CAPAS DE LA APLICACIÓN
-    // DTO para representar el recuento consolidado de un platillo en el día
+    // DTO para representar el recuento consolidado de un platillo en el día (Ej. Pollo en crema -> 3 solicitudes)
     public class PlatilloConsolidadoDTO
     {
         public int MenuId { get; set; }
@@ -13,7 +11,7 @@
         public bool EsDieta { get; set; }
     }
 
-    // DTO para representar el detalle individual de una persona que reservó
+    // DTO para representar el detalle individual de una persona que realizó una reserva
     public class ReservaDetalleDTO
     {
         public int ReservaId { get; set; }
