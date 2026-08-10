@@ -39,6 +39,13 @@ namespace RestauranteIntecapWeb_MLMG.Models
         [StringLength(255)]
         public string password { get; set; } = null!;
 
+
+
+        [StringLength(20)]
+        public string nit_facturacion { get; set; } = "C/F";
+
+
+
         public int rol_id { get; set; }
 
         public bool activo { get; set; } = true;
@@ -122,6 +129,9 @@ namespace RestauranteIntecapWeb_MLMG.Models
         [Required]
         [StringLength(20)]
         public string estado { get; set; } = "Activa";
+
+        [StringLength(20)]
+        public string nit_facturacion { get; set; } = "C/F";
 
         [ForeignKey("usuario_id")]
         public virtual Usuario? Usuario { get; set; }

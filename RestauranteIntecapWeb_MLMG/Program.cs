@@ -19,6 +19,9 @@ namespace RestauranteIntecapWeb_MLMG
             // Registro del Servicio de Cocina
             builder.Services.AddScoped<ICocinaService, CocinaService>();
 
+            // Registrar el Servicio de Empleados
+            builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
+
             var app = builder.Build();
 
             if (!app.Environment.IsDevelopment())

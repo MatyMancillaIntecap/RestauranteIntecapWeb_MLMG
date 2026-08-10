@@ -1,0 +1,263 @@
+﻿@model IEnumerable<RestauranteIntecapWeb_MLMG.Models.MenuDiario>
+
+@{
+    ViewData["Title"] = "Menú del Día - Reservas";
+    int usuarioId = ViewBag.UsuarioId ?? 3;
+}
+
+<div class="container mt-3 mb-5">
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8 col-12">
+            <h3 class="text-primary fw-bold">🍽️ Menú del Día (@DateTime.Today.ToString("dd/MM/yyyy"))</h3>
+            <p class="text-muted mb-0">Selecciona hasta un máximo de 2 almuerzos por día e indica la forma de pago para cada uno.</p>
+        </div>
+        <div class="col-md-4 col-12 text-md-end mt-2 mt-md-0">
+            <a asp-action="Historial" class="btn btn-outline-primary fw-bold">📜 Ver Mi Historial</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- LISTA DE PLATILLOS -->
+        <div class="col-lg-8 col-12 mb-4">
+            <div class="row">
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <div class="col-md-6 col-12 mb-4">
+                            <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                                @if (!string.IsNullOrEmpty(item.imagen_url))
+                                {
+                                    <img src="@item.imagen_url" class="card-img-top" style="height: 180px; object-fit: cover;" alt="@item.nombre_plato" />
+                                }
+                                else
+                                {
+                                    <div class="bg-secondary text-white text-center py-5">Sin Imagen</div>
+                                }
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title fw-bold mb-0">@item.nombre_plato</h5>
+                                        <span class="badge bg-success">Disponible</span>
+                                    </div>
+                                    <p class="card-text text-muted small">@item.descripcion</p>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="fs-5 fw-bold text-primary">Q @item.precio.ToString("F2")</span>
+                                        <span class="badge bg-light text-dark border">Stock: @item.stock</span>
+                                    </div>
+
+                                    <div class="border-top pt-3">
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold">Forma de Pago para este platillo:</label>
+                                            <select id="pago_@item.id" class="form-select form-select-sm">
+                                                <option value="1">💵 Efectivo</option>
+                                                <option value="2">💳 Carnet</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold">Consumo:</label>
+                                            <select id="lugar_@item.id" class="form-select form-select-sm">
+                                                <option value="En restaurante">🍽️ En restaurante</option>
+                                                <option value="Llevar">🛍️ Llevar</option>
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary w-100 fw-bold mt-2" onclick="agregarAlCarrito(@item.id, '@item.nombre_plato', @item.precio)">
+                                            🛒 Seleccionar Platillo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="alert alert-warning text-center py-4">
+                            No hay platillos disponibles para reservar en este momento.
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- PANEL LATERAL: CARRITO DE COMPRA -->
+        <div class="col-lg-4 col-12">
+            <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">🛍️ Mi Solicitud (<span id="countPlatillos">0</span>/2)</h5>
+                </div>
+                <div class="card-body">
+                    <div id="listaCarrito" class="mb-3">
+                        <p class="text-muted text-center py-3">No has seleccionado platillos aún.</p>
+                    </div>
+
+                    <!-- CAMPO DE NIT PARA FACTURACIÓN -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">NIT para Facturación (Opcional):</label>
+                        <input type="text" id="nitFacturacion" class="form-control form-control-sm" placeholder="Ej. 1234567-8 o C/F" value="C/F" />
+                    </div>
+
+                    <hr />
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold fs-5">Total a Pagar:</span>
+                        <span id="totalPagar" class="fw-bold fs-5 text-success">Q 0.00</span>
+                    </div>
+                    <button id="btnConfirmar" class="btn btn-success w-100 fw-bold fs-6" onclick="confirmarReserva()" disabled>
+                        ✅ Confirmar Reserva
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL AMIGABLE DE LÍMITE ALCANZADO -->
+<div class="modal fade" id="modalLimiteAlcanzado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-3">
+            <div class="modal-body">
+                <div class="fs-1 text-warning mb-2">⚠️</div>
+                <h4 class="fw-bold text-dark mb-2">Límite de Reservas Alcanzado</h4>
+                <p id="mensajeLimite" class="text-muted mb-4">Has alcanzado el límite máximo permitido de 2 almuerzos por día para tu cuenta.</p>
+                <button type="button" class="btn btn-primary fw-bold px-4" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let carrito = [];
+        const usuarioId = @usuarioId;
+
+        function agregarAlCarrito(id, nombre, precio) {
+            let totalUnidades = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            if (totalUnidades >= 2) {
+                $('#mensajeLimite').text("No puedes agregar más platillos. El sistema permite un máximo de 2 almuerzos por día.");
+                var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+                modal.show();
+                return;
+            }
+
+            let formaPagoId = parseInt($('#pago_' + id).val());
+            let formaPagoTexto = $('#pago_' + id + ' option:selected').text();
+            let dondeConsume = $('#lugar_' + id).val();
+
+            let existente = carrito.find(item => item.menuId === id && item.formaPagoId === formaPagoId && item.dondeConsume === dondeConsume);
+
+            if (existente) {
+                existente.cantidad += 1;
+            } else {
+                carrito.push({
+                    menuId: id,
+                    nombre: nombre,
+                    precio: precio,
+                    cantidad: 1,
+                    formaPagoId: formaPagoId,
+                    formaPagoTexto: formaPagoTexto,
+                    dondeConsume: dondeConsume
+                });
+            }
+
+            renderizarCarrito();
+        }
+
+        function renderizarCarrito() {
+            let contenedor = $('#listaCarrito');
+            contenedor.empty();
+
+            if (carrito.length === 0) {
+                contenedor.html('<p class="text-muted text-center py-3">No has seleccionado platillos aún.</p>');
+                $('#totalPagar').text('Q 0.00');
+                $('#countPlatillos').text('0');
+                $('#btnConfirmar').prop('disabled', true);
+                return;
+            }
+
+            let total = 0;
+            let cantidadTotal = 0;
+
+            carrito.forEach((item, index) => {
+                let subtotal = item.precio * item.cantidad;
+                total += subtotal;
+                cantidadTotal += item.cantidad;
+
+                let html = `
+                            <div class="p-2 mb-2 bg-light rounded border">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="text-primary">${item.nombre}</strong>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})">❌</button>
+                                </div>
+                                <div class="small text-muted">
+                                    Cant: ${item.cantidad} | Q ${item.precio.toFixed(2)} c/u<br>
+                                    Pago: <span class="badge bg-info text-dark">${item.formaPagoTexto}</span> (${item.dondeConsume})
+                                </div>
+                            </div>
+                        `;
+                contenedor.append(html);
+            });
+
+            $('#totalPagar').text('Q ' + total.toFixed(2));
+            $('#countPlatillos').text(cantidadTotal);
+            $('#btnConfirmar').prop('disabled', false);
+        }
+
+        function eliminarDelCarrito(index) {
+            carrito.splice(index, 1);
+            renderizarCarrito();
+        }
+
+
+
+
+
+        function confirmarReserva() {
+    if (carrito.length === 0) return;
+
+    let nitVal = $('#nitFacturacion').val().trim();
+    if (nitVal === "") {
+        nitVal = "C/F";
+    }
+
+    // Expresión regular para validar 13 dígitos numéricos o C/F
+    let regexNit = /^(C\/F|c\/f|\d{13})$/;
+
+    if (!regexNit.test(nitVal)) {
+        $('#mensajeLimite').html("<strong>Formato de NIT Incorrecto</strong><br>El NIT para personas jurídicas/empresas debe contener exactamente 13 dígitos numéricos (sin guiones) o indicar 'C/F'.");
+        var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+        modal.show();
+        return;
+    }
+
+    let payload = {
+        usuarioId: usuarioId,
+        nitFacturacion: nitVal,
+        platillos: carrito.map(item => ({
+            menuId: item.menuId,
+            cantidad: item.cantidad,
+            formaPagoId: item.formaPagoId,
+            dondeConsume: item.dondeConsume
+        }))
+    };
+
+    $.ajax({
+        url: '/Empleado/RealizarReserva',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function (res) {
+            alert(res.mensaje);
+            window.location.href = '/Empleado/Historial';
+        },
+        error: function (xhr) {
+            $('#mensajeLimite').text(xhr.responseText || "No fue posible procesar la reserva.");
+            var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+            modal.show();
+        }
+    });
+}
+    </script>
+
+
+
+}
