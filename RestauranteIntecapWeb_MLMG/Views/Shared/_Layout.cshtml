@@ -1,47 +1,186 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - RestauranteIntecapWeb_MLMG</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - Restaurante Intecap</title>
+    <!-- Framework de Estilos Bootstrap 5 -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/RestauranteIntecapWeb_MLMG.styles.css" asp-append-version="true" />
+    <!-- Librería de Íconos Vectoriales -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+            /* ESTILOS PERSONALIZADOS HOMOLOGADOS PARA TODOS LOS USUARIOS */
+            .navbar-custom {
+                background-color: #215ca8 !important; /* Azul institucional Intecap */
+                padding: 0.75rem 1rem;
+            }
+
+            /* Estilo base para cada botón del menú (Cápsula / Nav Pill) */
+            .nav-btn {
+                background-color: rgba(255, 255, 255, 0.15); /* Fondo blanco semitransparente */
+                color: #ffffff !important;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 20px; /* Bordes redondeados tipo píldora */
+                padding: 0.45rem 1rem;
+                margin: 0.2rem 0.3rem;
+                font-weight: 600;
+                font-size: 0.95rem;
+                transition: all 0.25s ease-in-out; /* Animación suave al pasar el cursor */
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                text-decoration: none;
+            }
+
+                /* Efecto Hover: Cuando el usuario pasa el mouse sobre el botón */
+                .nav-btn:hover {
+                    background-color: #ffffff !important;
+                    color: #215ca8 !important; /* El texto cambia al azul de Intecap */
+                    transform: translateY(-2px); /* Se eleva 2 píxeles */
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra de profundidad */
+                }
+
+            /* Botón de Cerrar Sesión destacado en color rojo */
+            .btn-logout {
+                background-color: #dc3545;
+                color: #ffffff !important;
+                border: none;
+                border-radius: 20px;
+                padding: 0.45rem 1.1rem;
+                font-weight: 700;
+                transition: all 0.25s ease-in-out;
+                text-decoration: none;
+            }
+
+                .btn-logout:hover {
+                    background-color: #b02a37;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
+                }
+
+            /* Insignia con el nombre del usuario autenticado */
+            .user-badge {
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 20px;
+                padding: 0.4rem 0.9rem;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                font-size: 0.95rem;
+            }
+    </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">RestauranteIntecapWeb_MLMG</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow">
+            <div class="container-fluid px-3">
+
+                <!-- LOGO INSTITUCIONAL -->
+                <a class="navbar-brand d-flex align-items-center fw-bold fs-5 me-3" asp-controller="Account" asp-action="Login">
+                    <span class="fs-4 me-2">🍳</span>
+                    <span>Restaurante Intecap</span>
+                </a>
+
+                <!-- BOTÓN HAMBURGUESA PARA TELÉFONOS MÓVILES -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+
+                <!-- CONTENIDO DEL MENÚ DE NAVEGACIÓN -->
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Admin" asp-action="Index">
+                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Admin" asp-action="Usuarios">
+                                        <i class="bi bi-people-fill"></i> Usuarios
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Cocina" asp-action="Index">
+                                        <i class="bi bi-fire"></i> Área Cocina
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Empleado" asp-action="Index">
+                                        <i class="bi bi-egg-fried"></i> Hacer Reserva
+                                    </a>
+                                </li>
+                            }
+                            else if (User.IsInRole("Cocina"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Cocina" asp-action="Index">
+                                        <i class="bi bi-fire"></i> Área Cocina
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Empleado" asp-action="Index">
+                                        <i class="bi bi-egg-fried"></i> Hacer Reserva
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Empleado" asp-action="Historial">
+                                        <i class="bi bi-journal-text"></i> Mis Reservas
+                                    </a>
+                                </li>
+                            }
+                            else if (User.IsInRole("Empleado"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Empleado" asp-action="Index">
+                                        <i class="bi bi-egg-fried"></i> Menú del Día
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Empleado" asp-action="Historial">
+                                        <i class="bi bi-journal-text"></i> Mi Historial
+                                    </a>
+                                </li>
+                            }
+                        }
                     </ul>
+
+                    <!-- ÁREA DERECHA: USUARIO CONECTADO Y BOTÓN SALIR -->
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+                    {
+                        <div class="d-flex align-items-center text-white gap-2 flex-wrap mt-2 mt-lg-0">
+                            <div class="user-badge d-flex align-items-center me-1">
+                                <i class="bi bi-person-circle fs-5 me-2 text-warning"></i>
+                                <span class="fw-bold">@User.Identity.Name</span>
+                            </div>
+                            <a asp-controller="Account" asp-action="Logout" class="btn-logout d-flex align-items-center gap-1">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a>
+                        </div>
+                    }
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+    <main role="main" class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <!-- PIE DE PÁGINA INSTITUCIONAL -->
+    <footer class="footer mt-auto py-3 bg-dark text-white-50 text-center">
         <div class="container">
-            &copy; 2026 - RestauranteIntecapWeb_MLMG - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <small>&copy; @DateTime.Now.Year - Restaurante Escuela INTECAP</small>
         </div>
     </footer>
+
+    <!-- SCRIPTS BASE -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

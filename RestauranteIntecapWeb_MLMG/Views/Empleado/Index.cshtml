@@ -11,9 +11,6 @@
             <h3 class="text-primary fw-bold">🍽️ Menú del Día (@DateTime.Today.ToString("dd/MM/yyyy"))</h3>
             <p class="text-muted mb-0">Selecciona hasta un máximo de 2 almuerzos por día e indica la forma de pago para cada uno.</p>
         </div>
-        <div class="col-md-4 col-12 text-md-end mt-2 mt-md-0">
-            <a asp-action="Historial" class="btn btn-outline-primary fw-bold">📜 Ver Mi Historial</a>
-        </div>
     </div>
 
     <div class="row">
@@ -93,8 +90,8 @@
 
                     <!-- CAMPO DE NIT PARA FACTURACIÓN -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">NIT para Facturación (Opcional):</label>
-                        <input type="text" id="nitFacturacion" class="form-control form-control-sm" placeholder="Ej. 1234567-8 o C/F" value="C/F" />
+                        <label class="form-label small fw-bold">NIT para Facturación (Opcional):</label>
+                        <input type="text" id="nitInput" class="form-control form-control-sm" value="@ViewBag.NitUsuario" placeholder="C/F o 13 dígitos" />
                     </div>
 
                     <hr />
@@ -183,17 +180,17 @@
                 cantidadTotal += item.cantidad;
 
                 let html = `
-                            <div class="p-2 mb-2 bg-light rounded border">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <strong class="text-primary">${item.nombre}</strong>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})">❌</button>
-                                </div>
-                                <div class="small text-muted">
-                                    Cant: ${item.cantidad} | Q ${item.precio.toFixed(2)} c/u<br>
-                                    Pago: <span class="badge bg-info text-dark">${item.formaPagoTexto}</span> (${item.dondeConsume})
-                                </div>
-                            </div>
-                        `;
+                    <div class="p-2 mb-2 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong class="text-primary">${item.nombre}</strong>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})">❌</button>
+                        </div>
+                        <div class="small text-muted">
+                            Cant: ${item.cantidad} | Q ${item.precio.toFixed(2)} c/u<br>
+                            Pago: <span class="badge bg-info text-dark">${item.formaPagoTexto}</span> (${item.dondeConsume})
+                        </div>
+                    </div>
+                `;
                 contenedor.append(html);
             });
 
@@ -207,57 +204,49 @@
             renderizarCarrito();
         }
 
-
-
-
-
         function confirmarReserva() {
-    if (carrito.length === 0) return;
+            if (carrito.length === 0) return;
 
-    let nitVal = $('#nitFacturacion').val().trim();
-    if (nitVal === "") {
-        nitVal = "C/F";
-    }
+            // Arreglado: Apunta al ID correcto 'nitInput'
+            let nitVal = $('#nitInput').val().trim();
+            if (nitVal === "") {
+                nitVal = "C/F";
+            }
 
-    // Expresión regular para validar 13 dígitos numéricos o C/F
-    let regexNit = /^(C\/F|c\/f|\d{13})$/;
+            let regexNit = /^(C\/F|c\/f|\d{13})$/;
+            if (!regexNit.test(nitVal)) {
+                $('#mensajeLimite').html("<strong>Formato de NIT Incorrecto</strong><br>El NIT para personas jurídicas/empresas debe contener exactamente 13 dígitos numéricos (sin guiones) o indicar 'C/F'.");
+                var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+                modal.show();
+                return;
+            }
 
-    if (!regexNit.test(nitVal)) {
-        $('#mensajeLimite').html("<strong>Formato de NIT Incorrecto</strong><br>El NIT para personas jurídicas/empresas debe contener exactamente 13 dígitos numéricos (sin guiones) o indicar 'C/F'.");
-        var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
-        modal.show();
-        return;
-    }
+            let payload = {
+                usuarioId: usuarioId,
+                nitFacturacion: nitVal,
+                platillos: carrito.map(item => ({
+                    menuId: item.menuId,
+                    cantidad: item.cantidad,
+                    formaPagoId: item.formaPagoId,
+                    dondeConsume: item.dondeConsume
+                }))
+            };
 
-    let payload = {
-        usuarioId: usuarioId,
-        nitFacturacion: nitVal,
-        platillos: carrito.map(item => ({
-            menuId: item.menuId,
-            cantidad: item.cantidad,
-            formaPagoId: item.formaPagoId,
-            dondeConsume: item.dondeConsume
-        }))
-    };
-
-    $.ajax({
-        url: '/Empleado/RealizarReserva',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(payload),
-        success: function (res) {
-            alert(res.mensaje);
-            window.location.href = '/Empleado/Historial';
-        },
-        error: function (xhr) {
-            $('#mensajeLimite').text(xhr.responseText || "No fue posible procesar la reserva.");
-            var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
-            modal.show();
+            $.ajax({
+                url: '/Empleado/RealizarReserva',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function (res) {
+                    alert(res.mensaje);
+                    window.location.href = '/Empleado/Historial';
+                },
+                error: function (xhr) {
+                    $('#mensajeLimite').text(xhr.responseText || "No fue posible procesar la reserva.");
+                    var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+                    modal.show();
+                }
+            });
         }
-    });
-}
     </script>
-
-
-
 }

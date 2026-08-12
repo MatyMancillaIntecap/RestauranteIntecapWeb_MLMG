@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿// DIRECTIVAS DE IMPORTACIÓN (Van siempre al inicio del archivo)
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -18,13 +19,12 @@ namespace RestauranteIntecapWeb_MLMG.Services
             _context = context;
         }
 
-        // ... Métodos anteriores de gestión de usuarios se conservan intactos ...
-
+        // 1. OBTENER TODOS LOS USUARIOS (Ordenados predeterminadamente de la A a la Z por Nombre)
         public async Task<List<UsuarioAdminDTO>> ObtenerTodosLosUsuariosAsync()
         {
             return await _context.Usuarios
                 .Include(u => u.Rol)
-                .OrderBy(u => u.nombre)
+                .OrderBy(u => u.nombre) // ORDENAMIENTO PREDETERMINADO A-Z POR NOMBRE COMPLETO
                 .Select(u => new UsuarioAdminDTO
                 {
                     Id = u.id,
@@ -35,11 +35,12 @@ namespace RestauranteIntecapWeb_MLMG.Services
                     Activo = u.activo,
                     NitFacturacion = u.nit_facturacion,
                     MaxAlmuerzosPermitidos = u.Rol.max_almuerzos,
-                    FechaCreacion = u.fecha_creacion
+                    FechaCreacion = u.fecha_creacion // Mantiene visible la fecha de registro
                 })
                 .ToListAsync();
         }
 
+        // 2. OBTENER USUARIO POR ID
         public async Task<UsuarioEdicionDTO?> ObtenerUsuarioPorIdAsync(int id)
         {
             var user = await _context.Usuarios
@@ -60,6 +61,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
             };
         }
 
+        // 3. GUARDAR O ACTUALIZAR USUARIO
         public async Task<(bool Exito, string Mensaje)> GuardarUsuarioAsync(UsuarioEdicionDTO dto)
         {
             bool correoExiste = await _context.Usuarios
@@ -117,6 +119,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
             return (true, "Usuario y límites guardados correctamente.");
         }
 
+        // 4. CAMBIAR ESTADO ACTIVO/INACTIVO
         public async Task<bool> CambiarEstadoUsuarioAsync(int id, bool activo)
         {
             var user = await _context.Usuarios.FindAsync(id);
@@ -127,12 +130,13 @@ namespace RestauranteIntecapWeb_MLMG.Services
             return true;
         }
 
+        // 5. OBTENER LISTA DE ROLES
         public async Task<List<Rol>> ObtenerRolesAsync()
         {
             return await _context.Roles.ToListAsync();
         }
 
-        // IMPLEMENTACIÓN DE MÉTRICAS PARA EL DASHBOARD
+        // 6. MÉTRICAS PARA DASHBOARD
         public async Task<DashboardDTO> ObtenerMétricasDashboardAsync()
         {
             var hoy = DateTime.Today;
@@ -154,7 +158,6 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 .Where(r => r.estado == "Activa" && r.MenuDiario != null)
                 .Sum(r => r.cantidad * r.MenuDiario!.precio);
 
-            // Platillo más solicitado de hoy
             var masVendidoGroup = reservasHoy
                 .Where(r => r.estado == "Activa")
                 .GroupBy(r => r.MenuDiario!.nombre_plato)
@@ -183,7 +186,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
             };
         }
 
-        // IMPLEMENTACIÓN DE FICHA DE DETALLE DE USUARIO COMPLETO
+        // 7. DETALLE COMPLETO DE USUARIO
         public async Task<DetalleUsuarioCompletoDTO?> ObtenerDetalleCompletoUsuarioAsync(int usuarioId)
         {
             var usuarios = await ObtenerTodosLosUsuariosAsync();
@@ -226,7 +229,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
             };
         }
 
-        // REPORTE EXCEL GLOBAL CON FILTROS MULTIDIMENSIONALES
+        // 8. REPORTE EXCEL GLOBAL (Ordenado por Nombre A-Z y luego por Fecha Descendente)
         public async Task<byte[]> GenerarReporteGlobalExcelAsync(FiltroReporteAdminDTO filtro)
         {
             var query = _context.Reservas
@@ -250,22 +253,27 @@ namespace RestauranteIntecapWeb_MLMG.Services
             if (filtro.MenuId.HasValue && filtro.MenuId > 0)
                 query = query.Where(r => r.menu_id == filtro.MenuId.Value);
 
-            var lista = await query.OrderByDescending(r => r.fecha_reserva).ToListAsync();
+            // CAMBIO CLAVE DE ORDENAMIENTO: Primero Nombre del Usuario (A-Z), luego Fecha Reserva
+            var lista = await query
+                .OrderBy(r => r.Usuario!.nombre)
+                .ThenByDescending(r => r.fecha_reserva)
+                .ToListAsync();
 
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("Reporte General Reservas");
 
                 worksheet.Cell(1, 1).Value = "# Reserva";
-                worksheet.Cell(1, 2).Value = "Fecha Consumo";
-                worksheet.Cell(1, 3).Value = "Usuario / Empleado";
-                worksheet.Cell(1, 4).Value = "Platillo";
-                worksheet.Cell(1, 5).Value = "Cantidad";
-                worksheet.Cell(1, 6).Value = "Precio Unit.";
-                worksheet.Cell(1, 7).Value = "Total (Q)";
-                worksheet.Cell(1, 8).Value = "Forma Pago";
-                worksheet.Cell(1, 9).Value = "NIT";
-                worksheet.Cell(1, 10).Value = "Estado";
+                worksheet.Cell(1, 2).Value = "Fecha Reserva";
+                worksheet.Cell(1, 3).Value = "Fecha Consumo";
+                worksheet.Cell(1, 4).Value = "Usuario / Empleado (A-Z)";
+                worksheet.Cell(1, 5).Value = "Platillo";
+                worksheet.Cell(1, 6).Value = "Cantidad";
+                worksheet.Cell(1, 7).Value = "Precio Unit.";
+                worksheet.Cell(1, 8).Value = "Total (Q)";
+                worksheet.Cell(1, 9).Value = "Forma Pago";
+                worksheet.Cell(1, 10).Value = "NIT";
+                worksheet.Cell(1, 11).Value = "Estado";
 
                 var headerRow = worksheet.Row(1);
                 headerRow.Style.Font.Bold = true;
@@ -276,15 +284,16 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 foreach (var item in lista)
                 {
                     worksheet.Cell(row, 1).Value = item.id;
-                    worksheet.Cell(row, 2).Value = item.fecha_consumo.ToString("dd/MM/yyyy");
-                    worksheet.Cell(row, 3).Value = item.Usuario!.nombre;
-                    worksheet.Cell(row, 4).Value = item.MenuDiario!.nombre_plato;
-                    worksheet.Cell(row, 5).Value = item.cantidad;
-                    worksheet.Cell(row, 6).Value = item.MenuDiario.precio;
-                    worksheet.Cell(row, 7).Value = item.cantidad * item.MenuDiario.precio;
-                    worksheet.Cell(row, 8).Value = item.FormaPago!.nombre;
-                    worksheet.Cell(row, 9).Value = item.nit_facturacion;
-                    worksheet.Cell(row, 10).Value = item.estado;
+                    worksheet.Cell(row, 2).Value = item.fecha_reserva.ToString("dd/MM/yyyy HH:mm");
+                    worksheet.Cell(row, 3).Value = item.fecha_consumo.ToString("dd/MM/yyyy");
+                    worksheet.Cell(row, 4).Value = item.Usuario!.nombre;
+                    worksheet.Cell(row, 5).Value = item.MenuDiario!.nombre_plato;
+                    worksheet.Cell(row, 6).Value = item.cantidad;
+                    worksheet.Cell(row, 7).Value = item.MenuDiario.precio;
+                    worksheet.Cell(row, 8).Value = item.cantidad * item.MenuDiario.precio;
+                    worksheet.Cell(row, 9).Value = item.FormaPago!.nombre;
+                    worksheet.Cell(row, 10).Value = item.nit_facturacion;
+                    worksheet.Cell(row, 11).Value = item.estado;
                     row++;
                 }
 
@@ -298,7 +307,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
             }
         }
 
-        // REPORTE PDF GLOBAL CON FILTROS MULTIDIMENSIONALES
+        // 9. REPORTE PDF GLOBAL (Ordenado por Nombre A-Z y luego por Fecha Descendente)
         public async Task<byte[]> GenerarReporteGlobalPdfAsync(FiltroReporteAdminDTO filtro)
         {
             var query = _context.Reservas
@@ -319,7 +328,11 @@ namespace RestauranteIntecapWeb_MLMG.Services
             if (!string.IsNullOrWhiteSpace(filtro.Estado) && filtro.Estado != "Todos")
                 query = query.Where(r => r.estado == filtro.Estado);
 
-            var lista = await query.OrderByDescending(r => r.fecha_reserva).ToListAsync();
+            // CAMBIO CLAVE DE ORDENAMIENTO: Primero Nombre del Usuario (A-Z), luego Fecha Reserva
+            var lista = await query
+                .OrderBy(r => r.Usuario!.nombre)
+                .ThenByDescending(r => r.fecha_reserva)
+                .ToListAsync();
 
             var document = Document.Create(container =>
             {
@@ -352,7 +365,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                         {
                             header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("#").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("Fecha").FontColor(Colors.White).Bold();
-                            header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("Usuario").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("Usuario (A-Z)").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("Platillo").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("Cant").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(3).Text("Total").FontColor(Colors.White).Bold();
@@ -381,18 +394,18 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
             return document.GeneratePdf();
         }
-        // Genera el listado completo de usuarios en formato Excel (.xlsx)
+
+        // 10. GENERAR EXCEL DE USUARIOS
         public async Task<byte[]> GenerarExcelUsuariosAsync()
         {
-            var usuarios = await ObtenerTodosLosUsuariosAsync();
+            var usuarios = await ObtenerTodosLosUsuariosAsync(); // Ya viene ordenado por Nombre A-Z desde la función 1
 
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("Padrón de Usuarios");
 
-                // Encabezados con formato visual
                 worksheet.Cell(1, 1).Value = "# ID";
-                worksheet.Cell(1, 2).Value = "Nombre Completo";
+                worksheet.Cell(1, 2).Value = "Nombre Completo (A-Z)";
                 worksheet.Cell(1, 3).Value = "Correo Electrónico";
                 worksheet.Cell(1, 4).Value = "Rol Asignado";
                 worksheet.Cell(1, 5).Value = "Límite Almuerzos";
@@ -402,7 +415,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
                 var headerRow = worksheet.Row(1);
                 headerRow.Style.Font.Bold = true;
-                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#198754"); // Color verde corporativo
+                headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#198754");
                 headerRow.Style.Font.FontColor = XLColor.White;
 
                 int row = 2;
@@ -429,10 +442,10 @@ namespace RestauranteIntecapWeb_MLMG.Services
             }
         }
 
-        // Genera el listado completo de usuarios en formato PDF (.pdf)
+        // 11. GENERAR PDF DE USUARIOS
         public async Task<byte[]> GenerarPdfUsuariosAsync()
         {
-            var usuarios = await ObtenerTodosLosUsuariosAsync();
+            var usuarios = await ObtenerTodosLosUsuariosAsync(); // Ya viene ordenado por Nombre A-Z desde la función 1
 
             var document = Document.Create(container =>
             {
@@ -463,7 +476,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                         table.Header(header =>
                         {
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("#").FontColor(Colors.White).Bold();
-                            header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Nombre").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Nombre (A-Z)").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Correo").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Rol").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("NIT").FontColor(Colors.White).Bold();

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using RestauranteIntecapWeb_MLMG.Data;
 using RestauranteIntecapWeb_MLMG.Services;
+using QuestPDF.Infrastructure;
 
 
 namespace RestauranteIntecapWeb_MLMG
@@ -11,6 +12,9 @@ namespace RestauranteIntecapWeb_MLMG
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            QuestPDF.Settings.License = LicenseType.Community;
+
 
             builder.Services.AddControllersWithViews();
 

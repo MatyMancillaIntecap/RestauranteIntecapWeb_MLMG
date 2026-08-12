@@ -17,10 +17,23 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // Obtiene el historial del usuario aplicando filtros por rango de fechas y estado
         Task<List<HistorialEmpleadoDTO>> ObtenerHistorialUsuarioFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin, string? estado);
 
-        // Genera el archivo Excel filtrado
-        Task<byte[]> GenerarExcelHistorialFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin, string? estado);
 
-        // Genera el archivo PDF filtrado
-        Task<byte[]> GenerarPdfHistorialFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin, string? estado);
+
+        // Obtiene el NIT registrado del usuario actual
+        Task<string> ObtenerNitUsuarioAsync(int usuarioId);
+
+
+
+
+        // Genera el archivo Excel filtrado (Modificado: 3 parámetros)
+        Task<byte[]> GenerarExcelHistorialFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin);
+
+        // Genera el archivo PDF filtrado (Modificado: 3 parámetros)
+        Task<byte[]> GenerarPdfHistorialFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin);
+
+
+
+
+
     }
 }
