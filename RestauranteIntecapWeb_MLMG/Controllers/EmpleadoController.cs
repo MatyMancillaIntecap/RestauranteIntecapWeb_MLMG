@@ -17,6 +17,10 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             _empleadoService = empleadoService;
         }
 
+
+
+
+
         // Consulta los platillos de hoy invocando el método exacto del contrato
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -36,9 +40,6 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             // 2. Pasamos la información a la vista HTML mediante el ViewBag
             ViewBag.UsuarioId = usuarioId;
             ViewBag.NitUsuario = nitPrecargado;
-
-
-
 
 
             return View(menus);

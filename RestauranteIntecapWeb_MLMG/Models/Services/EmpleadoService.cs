@@ -24,7 +24,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
         public async Task<List<MenuDiario>> ObtenerMenuDisponiblePorFechaAsync(DateTime fecha)
         {
             return await _context.MenusDiarios
-                .Where(m => m.fecha.Date == fecha.Date && m.estado == "Disponible" && m.stock > 0)
+                .Where(m => m.fecha.Date == fecha.Date && m.stock > 0)
                 .OrderBy(m => m.nombre_plato) // Ordenamiento alfabético A-Z
                 .ToListAsync();
         }

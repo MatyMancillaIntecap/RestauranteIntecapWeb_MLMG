@@ -14,8 +14,16 @@
         <div class="card-body bg-light rounded-3 p-3">
             <div class="row align-items-center">
                 <div class="col-md-5 col-12">
-                    <h3 class="text-primary fw-bold mb-1">👨‍🍳 Área de Cocina - Panel de Control</h3>
+
+
+
+                    <h3 class="text-primary fw-bold mb-1">👨‍🍳 Área de Cocina </h3>
                     <p class="text-muted mb-0">Gestión de platillos, consolidado de pedidos y descarga de reportes.</p>
+
+
+
+
+
                 </div>
                 <div class="col-md-7 col-12 mt-3 mt-md-0">
                     <form method="get" asp-controller="Cocina" asp-action="Index" class="d-flex align-items-center justify-md-content-end gap-2 flex-wrap">
@@ -66,7 +74,6 @@
                             <form asp-controller="Cocina" asp-action="GuardarMenu" method="post" enctype="multipart/form-data">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="0" />
-                                <input type="hidden" name="estado" value="Disponible" />
 
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Nombre del Platillo</label>
@@ -123,49 +130,45 @@
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Imagen</th>
+                                            <th class="ps-3">Imagen</th>
                                             <th>Platillo</th>
                                             <th>Precio</th>
-                                            <th>Stock</th>
-                                            <th>Estado</th>
-                                            <th class="text-center">Acciones</th>
+                                            <th>Stock (Disp. / Inicial)</th>
+                                            <th>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @if (Model != null && Model.Any())
                                         {
-                                            @foreach (var item in Model)
+                                            @foreach (var plato in Model)
                                             {
                                                 <tr>
-                                                    <td>
-                                                        @if (!string.IsNullOrEmpty(item.imagen_url))
-                                                        {
-                                                            <img src="@item.imagen_url" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" />
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="badge bg-secondary">Sin Foto</span>
-                                                        }
+                                                    <td class="ps-3">
+                                                        <img src="@plato.imagen_url" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" alt="Platillo" />
                                                     </td>
                                                     <td>
-                                                        <div class="fw-bold">@item.nombre_plato</div>
-                                                        @if (item.es_dieta)
+                                                        <span class="fw-bold text-dark">@plato.nombre_plato</span>
+                                                        @if (plato.es_dieta)
                                                         {
-                                                            <span class="badge bg-info text-dark">🥗 Dieta</span>
+                                                            <br><span class="badge bg-info text-dark" style="font-size: 0.7rem;">🌿 Dieta</span>
                                                         }
                                                     </td>
-                                                    <td>Q @item.precio.ToString("F2")</td>
-                                                    <td><span class="badge bg-primary fs-6">@item.stock</span></td>
                                                     <td>
-                                                        <select class="form-select form-select-sm" onchange="cambiarEstado(@item.id, this.value)">
-                                                            <option value="Disponible" selected="@(item.estado == "Disponible")">Disponible</option>
-                                                            <option value="Agotado" selected="@(item.estado == "Agotado")">Agotado</option>
-                                                            <option value="Inactivo" selected="@(item.estado == "Inactivo")">Inactivo</option>
-                                                        </select>
+                                                        <span class="text-success fw-bold">Q @plato.precio.ToString("F2")</span>
                                                     </td>
-                                                    <td class="text-center">
-                                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalEditar(@item.id)" title="Editar platillo">✏️</button>
-                                                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(@item.id)" title="Eliminar platillo">🗑️</button>
+                                                    <td>
+                                                        <!-- Métrica visual clara: Stock Actual Disponible / Stock Inicial Total -->
+                                                        <span class="badge bg-primary px-2 py-1 fs-6">
+                                                            @plato.stock / @plato.stock
+                                                        </span>
+                                                    </td>
+                                                    <td >
+                                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalEditar(@plato.id)" title="Editar">
+                                                            ✏️
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(@plato.id)" title="Eliminar">
+                                                            🗑️
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             }
@@ -173,7 +176,7 @@
                                         else
                                         {
                                             <tr>
-                                                <td colspan="6" class="text-center py-4 text-muted">No hay platillos registrados para esta fecha.</td>
+                                                <td colspan="5" class="text-center py-4 text-muted">No hay platillos registrados para esta fecha.</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -294,7 +297,6 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <input type="hidden" id="edit_id" name="id" />
-                    <input type="hidden" id="edit_estado" name="estado" />
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Nombre del Platillo</label>
@@ -353,7 +355,6 @@
                     $('#edit_descripcion').val(data.descripcion);
                     $('#edit_precio').val(data.precio);
                     $('#edit_stock').val(data.stock);
-                    $('#edit_estado').val(data.estado);
                     $('#edit_es_dieta').prop('checked', data.es_dieta);
                     if (data.fecha) {
                         $('#edit_fecha').val(data.fecha.split('T')[0]);
@@ -364,16 +365,6 @@
                 })
                 .fail(function() {
                     alert('Error al obtener los datos del platillo.');
-                });
-        }
-
-        function cambiarEstado(id, nuevoEstado) {
-            $.post('/Cocina/CambiarEstado', { id: id, nuevoEstado: nuevoEstado })
-                .done(function() {
-                    console.log("Estado actualizado.");
-                })
-                .fail(function() {
-                    alert("Error al actualizar el estado.");
                 });
         }
 

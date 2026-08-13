@@ -31,18 +31,39 @@
                                 {
                                     <div class="bg-secondary text-white text-center py-5">Sin Imagen</div>
                                 }
+
+
+
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h5 class="card-title fw-bold mb-0">@item.nombre_plato</h5>
+                                 <!--aca habia dejado lo de dieta pero lo cambie a stock (NO QUEDO COOL) -->
+                                        <!-- RENDERIZADO CONDICIONAL DE LA ETIQUETA DIETA -->
+                                        @if (item.es_dieta)
+                                        {
+                                            <span class="badge bg-info text-dark">🌿 Dieta</span>
+                                        }
+
                                         <span class="badge bg-success">Disponible</span>
                                     </div>
+
                                     <p class="card-text text-muted small">@item.descripcion</p>
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <span class="fs-5 fw-bold text-primary">Q @item.precio.ToString("F2")</span>
+                                       
                                         <span class="badge bg-light text-dark border">Stock: @item.stock</span>
                                     </div>
 
                                     <div class="border-top pt-3">
+
+
+
+                                  <!-- necesito agregar lo de la cantidad, no se como ponerlo aún! -->
+
+
+
+
+
                                         <div class="mb-2">
                                             <label class="form-label small fw-bold">Forma de Pago para este platillo:</label>
                                             <select id="pago_@item.id" class="form-select form-select-sm">
