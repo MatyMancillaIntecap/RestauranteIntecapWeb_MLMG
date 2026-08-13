@@ -9,14 +9,12 @@
     <div class="card shadow-sm border-0 mb-4 rounded-3">
         <div class="card-body bg-light p-3">
             <div class="row align-items-center">
-                <div class="col-md-7 col-12">
-                    <h3 class="text-primary fw-bold mb-1">👨‍💼 Panel de Administración General</h3>
-                    <p class="text-muted mb-0">Métricas en tiempo real, rendimiento de ventas y control del sistema.</p>
-                </div>
-                <div class="col-md-5 col-12 text-md-end mt-2 mt-md-0 d-flex gap-2 justify-md-content-end">
-                    <a asp-action="Usuarios" class="btn btn-primary fw-bold">⚙️ Gestión Usuarios</a>
-                    <a asp-controller="Cocina" asp-action="Index" class="btn btn-dark fw-bold">🍳 Control Cocina</a>
-                </div>
+                <!-- Envolvemos todo en un div que contenga la clase text-center -->
+<div class="text-center my-4">
+    <h3 class="text-primary fw-bold mb-1">👨‍💼 Panel de Administración</h3>
+    <p class="text-muted mb-0">Métricas en tiempo real, rendimiento de ventas y control del sistema.</p>
+</div>
+              
             </div>
         </div>
     </div>
