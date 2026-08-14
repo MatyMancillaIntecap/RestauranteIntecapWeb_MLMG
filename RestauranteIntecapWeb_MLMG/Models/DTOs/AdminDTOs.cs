@@ -26,4 +26,8 @@
         public string NitFacturacion { get; set; } = "C/F";
         public int MaxAlmuerzos { get; set; } = 2; // Permite modificar el límite desde el modal
     }
+
+
 }
+
+

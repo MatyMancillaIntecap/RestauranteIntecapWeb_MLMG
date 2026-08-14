@@ -22,28 +22,50 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
 
 
         // Consulta los platillos de hoy invocando el método exacto del contrato
+        /* [HttpGet]
+         public async Task<IActionResult> Index()
+         {
+             var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+             int usuarioId = int.TryParse(idUsuarioClaim, out int id) ? id : 1;
+
+             // Invocación del método firmado en IEmpleadoService.cs
+             var menus = await _empleadoService.ObtenerMenuDisponiblePorFechaAsync(DateTime.Today);
+             ViewBag.UsuarioId = usuarioId;
+
+
+
+             // 1. Obtenemos el NIT del usuario desde la base de datos
+             string nitPrecargado = await _empleadoService.ObtenerNitUsuarioAsync(usuarioId);
+
+             // 2. Pasamos la información a la vista HTML mediante el ViewBag
+             ViewBag.UsuarioId = usuarioId;
+             ViewBag.NitUsuario = nitPrecargado;
+
+
+             return View(menus);
+         }*/
+
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var idUsuarioClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             int usuarioId = int.TryParse(idUsuarioClaim, out int id) ? id : 1;
 
-            // Invocación del método firmado en IEmpleadoService.cs
+            // 1. Obtenemos el menú disponible
             var menus = await _empleadoService.ObtenerMenuDisponiblePorFechaAsync(DateTime.Today);
+
+            // 2. Pedimos el límite al servicio (arquitectura limpia)
+            int limiteMaximoUsuario = await _empleadoService.ObtenerLimiteAlmuerzosUsuarioAsync(usuarioId);
+
+            // 3. Pasamos todo a la vista mediante el ViewBag
             ViewBag.UsuarioId = usuarioId;
-
-
-
-            // 1. Obtenemos el NIT del usuario desde la base de datos
-            string nitPrecargado = await _empleadoService.ObtenerNitUsuarioAsync(usuarioId);
-
-            // 2. Pasamos la información a la vista HTML mediante el ViewBag
-            ViewBag.UsuarioId = usuarioId;
-            ViewBag.NitUsuario = nitPrecargado;
-
+            ViewBag.LimiteMaximo = limiteMaximoUsuario;
+            ViewBag.NitUsuario = await _empleadoService.ObtenerNitUsuarioAsync(usuarioId);
 
             return View(menus);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> RealizarReserva([FromBody] SolicitudReservaDTO solicitud)

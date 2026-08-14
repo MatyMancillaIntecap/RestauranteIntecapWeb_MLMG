@@ -29,7 +29,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 .ToListAsync();
         }
 
-        // 2. Procesa la reserva evaluando el límite dinámico asignado al Rol del usuario (Empleado, Cocina, Admin)
+        // 2. Procesa la reserva evaluando el límite diario real (acumulado del día + nuevos solicitados)
         public async Task<(bool Exito, string Mensaje)> ProcesarReservaAsync(SolicitudReservaDTO solicitud)
         {
             if (solicitud.Platillos == null || !solicitud.Platillos.Any())
@@ -47,19 +47,40 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 return (false, "El usuario no existe en la base de datos.");
             }
 
-            // Obtener el límite del rol de la base de datos
+            // Obtener el límite configurado para el usuario/rol (ej. 2 para empleados, o lo que el Admin haya asignado)
             int limitePermitido = usuario.Rol != null ? usuario.Rol.max_almuerzos : 2;
-            int totalSolicitados = solicitud.Platillos.Sum(p => p.Cantidad);
 
-            // Si el límite es mayor a 0, se valida que no lo supere
-            if (limitePermitido > 0 && totalSolicitados > limitePermitido)
+            // Determinar la fecha de consumo (asumimos que todos los platillos de la solicitud son para la misma fecha)
+            // Buscamos la fecha del primer platillo solicitado en el menú
+            var primerMenuId = solicitud.Platillos.First().MenuId;
+            var menuPrincipal = await _context.MenusDiarios.FindAsync(primerMenuId);
+
+            if (menuPrincipal == null)
             {
-                return (false, $"Has superado el límite de {limitePermitido} almuerzos diarios para tu rol ({usuario.Rol?.nombre}).");
+                return (false, "El menú seleccionado no es válido.");
+            }
+
+            DateTime fechaConsumo = menuPrincipal.fecha.Date;
+
+            // INGENIERÍA DE SOFTWARE: Calcular cuántos platillos YA ha reservado este usuario para este mismo día (excluyendo canceladas)
+            int platillosYaReservadosHoy = await _context.Reservas
+                .Where(r => r.usuario_id == solicitud.UsuarioId &&
+                            r.fecha_consumo.Date == fechaConsumo &&
+                            r.estado == "Activa")
+                .SumAsync(r => r.cantidad);
+
+            int totalSolicitadosAhora = solicitud.Platillos.Sum(p => p.Cantidad);
+            int sumaTotalIntento = platillosYaReservadosHoy + totalSolicitadosAhora;
+
+            // Validar si la suma acumulada supera el límite permitido
+            if (limitePermitido > 0 && sumaTotalIntento > limitePermitido)
+            {
+                return (false, $"Límite excedido. Ya tienes {platillosYaReservadosHoy} almuerzos reservados para este día y tu límite máximo es {limitePermitido}.");
             }
 
             // Validar formato del NIT
             string nitLimpio = string.IsNullOrWhiteSpace(solicitud.NitFacturacion) ? "C/F" : solicitud.NitFacturacion.Trim();
-            if (!Regex.IsMatch(nitLimpio, @"^(C/F|c/f|\d{13})$"))
+            if (!Regex.IsMatch(nitLimpio, @"^(C/F|c/f|\d{1,13})$"))
             {
                 return (false, "El NIT ingresado no es válido. Debe contener 13 dígitos numéricos o 'C/F'.");
             }
@@ -310,5 +331,22 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
             return "C/F";
         }
+
+
+
+        public async Task<int> ObtenerLimiteAlmuerzosUsuarioAsync(int usuarioId)
+        {
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.id == usuarioId);
+
+            return usuario?.Rol != null ? usuario.Rol.max_almuerzos : 2;
+        }
+
+
+
+
+
+
     }
 }

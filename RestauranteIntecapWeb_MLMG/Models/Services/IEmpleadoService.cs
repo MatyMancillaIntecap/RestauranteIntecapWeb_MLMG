@@ -17,7 +17,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // Obtiene el historial del usuario aplicando filtros por rango de fechas y estado
         Task<List<HistorialEmpleadoDTO>> ObtenerHistorialUsuarioFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin, string? estado);
 
-
+        Task<int> ObtenerLimiteAlmuerzosUsuarioAsync(int usuarioId);
 
         // Obtiene el NIT registrado del usuario actual
         Task<string> ObtenerNitUsuarioAsync(int usuarioId);

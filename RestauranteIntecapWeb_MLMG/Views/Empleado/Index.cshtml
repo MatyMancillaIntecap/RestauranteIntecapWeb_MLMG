@@ -3,7 +3,10 @@
 @{
     ViewData["Title"] = "Menú del Día - Reservas";
     int usuarioId = ViewBag.UsuarioId ?? 3;
+    int limiteMaximo = ViewBag.LimiteMaximo ?? 2; // <--- Capturamos el límite enviado desde el backend
 }
+
+
 
 <div class="container mt-3 mb-5">
     <div class="row align-items-center mb-4">
@@ -32,37 +35,32 @@
                                     <div class="bg-secondary text-white text-center py-5">Sin Imagen</div>
                                 }
 
-
-
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h5 class="card-title fw-bold mb-0">@item.nombre_plato</h5>
-                                 <!--aca habia dejado lo de dieta pero lo cambie a stock (NO QUEDO COOL) -->
-                                        <!-- RENDERIZADO CONDICIONAL DE LA ETIQUETA DIETA -->
                                         @if (item.es_dieta)
                                         {
                                             <span class="badge bg-info text-dark">🌿 Dieta</span>
                                         }
-
                                         <span class="badge bg-success">Disponible</span>
                                     </div>
 
                                     <p class="card-text text-muted small">@item.descripcion</p>
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <span class="fs-5 fw-bold text-primary">Q @item.precio.ToString("F2")</span>
-                                       
                                         <span class="badge bg-light text-dark border">Stock: @item.stock</span>
                                     </div>
 
                                     <div class="border-top pt-3">
-
-
-
-                                  <!-- necesito agregar lo de la cantidad, no se como ponerlo aún! -->
-
-
-
-
+                                        <!-- Selector de Cantidad con validación de Stock máximo -->
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold">Cantidad:</label>
+                                            <div class="input-group input-group-sm">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad(@item.id, -1)">-</button>
+                                                <input type="number" id="cantidad_@item.id" class="form-control text-center fw-bold" value="1" min="1" max="@item.stock" readonly />
+                                                <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad(@item.id, 1, @item.stock)">+</button>
+                                            </div>
+                                        </div>
 
                                         <div class="mb-2">
                                             <label class="form-label small fw-bold">Forma de Pago para este platillo:</label>
@@ -78,7 +76,7 @@
                                                 <option value="Llevar">🛍️ Llevar</option>
                                             </select>
                                         </div>
-                                        <button class="btn btn-primary w-100 fw-bold mt-2" onclick="agregarAlCarrito(@item.id, '@item.nombre_plato', @item.precio)">
+                                        <button class="btn btn-primary w-100 fw-bold mt-2" onclick="agregarAlCarrito(@item.id, '@item.nombre_plato', @item.precio, @item.stock)">
                                             🛒 Seleccionar Platillo
                                         </button>
                                     </div>
@@ -101,9 +99,13 @@
         <!-- PANEL LATERAL: CARRITO DE COMPRA -->
         <div class="col-lg-4 col-12">
             <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 20px;">
+               
                 <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">🛍️ Mi Solicitud (<span id="countPlatillos">0</span>/2)</h5>
+                    <h5 class="mb-0">🛍️ Mi Solicitud (<span id="countPlatillos">0</span>/@limiteMaximo)</h5>
                 </div>
+
+
+
                 <div class="card-body">
                     <div id="listaCarrito" class="mb-3">
                         <p class="text-muted text-center py-3">No has seleccionado platillos aún.</p>
@@ -112,7 +114,7 @@
                     <!-- CAMPO DE NIT PARA FACTURACIÓN -->
                     <div class="mb-3">
                         <label class="form-label small fw-bold">NIT para Facturación (Opcional):</label>
-                        <input type="text" id="nitInput" class="form-control form-control-sm" value="@ViewBag.NitUsuario" placeholder="C/F o 13 dígitos" />
+                        <input type="text" id="nitInput" class="form-control form-control-sm" value="@ViewBag.NitUsuario" placeholder="C/F o 1-13 dígitos" />
                     </div>
 
                     <hr />
@@ -147,33 +149,72 @@
     <script>
         let carrito = [];
         const usuarioId = @usuarioId;
+        const limiteMaximoPermitido = @limiteMaximo; // Límite dinámico inyectado desde C# (10 para Admin, 2 para Empleado)
 
-        function agregarAlCarrito(id, nombre, precio) {
-            let totalUnidades = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-            if (totalUnidades >= 2) {
-                $('#mensajeLimite').text("No puedes agregar más platillos. El sistema permite un máximo de 2 almuerzos por día.");
+        function cambiarCantidad(idPlatillo, cambio, stockMaximo) {
+            const input = document.getElementById('cantidad_' + idPlatillo);
+            if (!input) return;
+
+            let valorActual = parseInt(input.value) || 1;
+            let nuevoValor = valorActual + cambio;
+
+            if (nuevoValor < 1) {
+                nuevoValor = 1;
+            }
+            if (stockMaximo && nuevoValor > stockMaximo) {
+                nuevoValor = stockMaximo;
+            }
+
+            input.value = nuevoValor;
+        }
+
+        function agregarAlCarrito(id, nombre, precio, stockMaximo) {
+            const inputCantidad = document.getElementById('cantidad_' + id);
+            const cantidadSeleccionada = parseInt(inputCantidad.value) || 1;
+
+            const selectPago = document.getElementById('pago_' + id);
+            const pagoId = selectPago ? parseInt(selectPago.value) : 1;
+            const pagoTexto = selectPago ? selectPago.options[selectPago.selectedIndex].text : "Efectivo";
+
+            const selectLugar = document.getElementById('lugar_' + id);
+            const lugarConsumo = selectLugar ? selectLugar.value : "En restaurante";
+
+            if (cantidadSeleccionada > stockMaximo) {
+                alert("No puedes pedir más de " + stockMaximo + " unidades disponibles.");
+                return;
+            }
+
+            if (cantidadSeleccionada < 1) {
+                alert("Debe seleccionar al menos 1 unidad.");
+                return;
+            }
+
+            // Validación única y limpia del límite máximo permitido por rol
+            let totalUnidadesActuales = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            if ((totalUnidadesActuales + cantidadSeleccionada) > limiteMaximoPermitido) {
+                $('#mensajeLimite').text("No puedes agregar esta cantidad. El sistema permite un máximo de " + limiteMaximoPermitido + " almuerzos por día para tu cuenta y ya tienes " + totalUnidadesActuales + " seleccionados.");
                 var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
                 modal.show();
                 return;
             }
 
-            let formaPagoId = parseInt($('#pago_' + id).val());
-            let formaPagoTexto = $('#pago_' + id + ' option:selected').text();
-            let dondeConsume = $('#lugar_' + id).val();
-
-            let existente = carrito.find(item => item.menuId === id && item.formaPagoId === formaPagoId && item.dondeConsume === dondeConsume);
+            let existente = carrito.find(item => item.menuId === id && item.formaPagoId === pagoId && item.dondeConsume === lugarConsumo);
 
             if (existente) {
-                existente.cantidad += 1;
+                if ((existente.cantidad + cantidadSeleccionada) > stockMaximo) {
+                    alert("La cantidad total en el carrito supera el stock disponible.");
+                    return;
+                }
+                existente.cantidad += cantidadSeleccionada;
             } else {
                 carrito.push({
                     menuId: id,
                     nombre: nombre,
                     precio: precio,
-                    cantidad: 1,
-                    formaPagoId: formaPagoId,
-                    formaPagoTexto: formaPagoTexto,
-                    dondeConsume: dondeConsume
+                    cantidad: cantidadSeleccionada,
+                    formaPagoId: pagoId,
+                    formaPagoTexto: pagoTexto,
+                    dondeConsume: lugarConsumo
                 });
             }
 
@@ -201,17 +242,17 @@
                 cantidadTotal += item.cantidad;
 
                 let html = `
-                    <div class="p-2 mb-2 bg-light rounded border">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong class="text-primary">${item.nombre}</strong>
-                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})">❌</button>
-                        </div>
-                        <div class="small text-muted">
-                            Cant: ${item.cantidad} | Q ${item.precio.toFixed(2)} c/u<br>
-                            Pago: <span class="badge bg-info text-dark">${item.formaPagoTexto}</span> (${item.dondeConsume})
-                        </div>
-                    </div>
-                `;
+                            <div class="p-2 mb-2 bg-light rounded border">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="text-primary">${item.nombre}</strong>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${index})">❌</button>
+                                </div>
+                                <div class="small text-muted">
+                                    Cant: ${item.cantidad} | Q ${item.precio.toFixed(2)} c/u<br>
+                                    Pago: <span class="badge bg-info text-dark">${item.formaPagoTexto}</span> (${item.dondeConsume})
+                                </div>
+                            </div>
+                        `;
                 contenedor.append(html);
             });
 
@@ -228,15 +269,14 @@
         function confirmarReserva() {
             if (carrito.length === 0) return;
 
-            // Arreglado: Apunta al ID correcto 'nitInput'
             let nitVal = $('#nitInput').val().trim();
             if (nitVal === "") {
                 nitVal = "C/F";
             }
 
-            let regexNit = /^(C\/F|c\/f|\d{13})$/;
+            let regexNit = /^(C\/F|c\/f|\d{1,13})$/;
             if (!regexNit.test(nitVal)) {
-                $('#mensajeLimite').html("<strong>Formato de NIT Incorrecto</strong><br>El NIT para personas jurídicas/empresas debe contener exactamente 13 dígitos numéricos (sin guiones) o indicar 'C/F'.");
+                $('#mensajeLimite').html("<strong>Formato de NIT Incorrecto</strong><br>El NIT debe contener entre 1 y 13 dígitos numéricos (sin guiones) o indicar 'C/F'.");
                 var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
                 modal.show();
                 return;
@@ -258,11 +298,11 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(payload),
-                success: function (res) {
+                success: function(res) {
                     alert(res.mensaje);
                     window.location.href = '/Empleado/Historial';
                 },
-                error: function (xhr) {
+                error: function(xhr) {
                     $('#mensajeLimite').text(xhr.responseText || "No fue posible procesar la reserva.");
                     var modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
                     modal.show();
