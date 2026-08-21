@@ -57,7 +57,12 @@
                                             <label class="form-label small fw-bold">Cantidad:</label>
                                             <div class="input-group input-group-sm">
                                                 <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad(@item.id, -1)">-</button>
+
+
                                                 <input type="number" id="cantidad_@item.id" class="form-control text-center fw-bold" value="1" min="1" max="@item.stock" readonly />
+
+
+
                                                 <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad(@item.id, 1, @item.stock)">+</button>
                                             </div>
                                         </div>
@@ -153,19 +158,28 @@
 
         function cambiarCantidad(idPlatillo, cambio, stockMaximo) {
             const input = document.getElementById('cantidad_' + idPlatillo);
-            if (!input) return;
+                 if (!input) return;
 
-            let valorActual = parseInt(input.value) || 1;
-            let nuevoValor = valorActual + cambio;
+                let valorActual = parseInt(input.value) || 1;
+                let nuevoValor = valorActual + cambio;
 
-            if (nuevoValor < 1) {
-                nuevoValor = 1;
-            }
-            if (stockMaximo && nuevoValor > stockMaximo) {
-                nuevoValor = stockMaximo;
-            }
+                // Validación inferior: la cantidad mínima siempre es 1
+                if (nuevoValor < 1) {
+                    nuevoValor = 1;
+                }
 
-            input.value = nuevoValor;
+                // Determinamos el límite superior estricto:
+                // El valor no puede ser mayor al stock del platillo NI mayor al límite máximo permitido por el rol.
+                let limiteSuperior = stockMaximo ? Math.min(stockMaximo, limiteMaximoPermitido) : limiteMaximoPermitido;
+
+                if (nuevoValor > limiteSuperior) {
+                    nuevoValor = limiteSuperior;
+        
+                    // Opcional pero profesional: Notificar sutilmente por qué no sube más
+                    console.ern?.("Se alcanzó el límite máximo permitido.");
+                }
+
+    input.value = nuevoValor;
         }
 
         function agregarAlCarrito(id, nombre, precio, stockMaximo) {
