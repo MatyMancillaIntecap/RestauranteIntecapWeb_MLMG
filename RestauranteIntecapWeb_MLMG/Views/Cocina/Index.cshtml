@@ -156,12 +156,19 @@
                                                     <td>
                                                         <span class="text-success fw-bold">Q @plato.precio.ToString("F2")</span>
                                                     </td>
+
+
+
                                                     <td>
-                                                        <!-- Métrica visual clara: Stock Actual Disponible / Stock Inicial Total -->
-                                                        <span class="badge bg-primary px-2 py-1 fs-6">
-                                                            @plato.stock / @plato.stock
+                                                        <!-- Métrica visual clara: Stock Actual Disponible / Stock Inicial Total (Disponible + Vendido) -->
+                                                        <span class="badge bg-primary px-2 py-1">
+                                                            @plato.stock / @(plato.stock + plato.cantidad_solicitada)
                                                         </span>
                                                     </td>
+
+
+
+
                                                     <td >
                                                         <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalEditar(@plato.id)" title="Editar">
                                                             ✏️

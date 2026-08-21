@@ -22,18 +22,27 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // Obtiene el NIT registrado del usuario actual
         Task<string> ObtenerNitUsuarioAsync(int usuarioId);
 
-
-
-
-        // Genera el archivo Excel filtrado (Modificado: 3 parámetros)
+        // Genera el archivo Excel filtrado
         Task<byte[]> GenerarExcelHistorialFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin);
 
-        // Genera el archivo PDF filtrado (Modificado: 3 parámetros)
+        // Genera el archivo PDF filtrado
         Task<byte[]> GenerarPdfHistorialFiltradoAsync(int usuarioId, DateTime? fechaInicio, DateTime? fechaFin);
 
 
 
 
 
+
+        // =========================================================================
+        // NUEVOS MÉTODOS PARA ESTADÍSTICAS DEL PANEL (DASHBOARD Y RESUMEN)
+        // =========================================================================
+        Task<int> ObtenerPlatillosDietaSolicitadosHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerPlatillosDietaInicialesHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerPlatillosNormalesSolicitadosHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerPlatillosNormalesInicialesHoyAsync(DateTime? fechaFiltro = null);
+        Task<decimal> ObtenerVentasTotalesHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerTotalReservasHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerUsuariosConReservasHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerTotalUsuariosRegistradosAsync();
     }
 }

@@ -8,16 +8,38 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
     {
         private readonly IAdminService _adminService;
         private readonly ICocinaService _cocinaService;
+        private readonly IEmpleadoService _empleadoService;
 
-        public AdminController(IAdminService adminService, ICocinaService cocinaService)
+        public AdminController(IAdminService adminService, ICocinaService cocinaService, IEmpleadoService empleadoService)
         {
             _adminService = adminService;
             _cocinaService = cocinaService;
+            _empleadoService = empleadoService;
         }
 
         // Muestra el Dashboard Principal con KPIs
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? fechaFiltro)
         {
+            // Llamamos a los métodos del servicio que creamos previamente, 
+            // pasando opcionalmente el filtro de fecha seleccionado por el administrador.
+            ViewBag.DietaSolicitados = await _empleadoService.ObtenerPlatillosDietaSolicitadosHoyAsync(fechaFiltro);
+            ViewBag.DietaIniciales = await _empleadoService.ObtenerPlatillosDietaInicialesHoyAsync(fechaFiltro);
+
+            ViewBag.NormalesSolicitados = await _empleadoService.ObtenerPlatillosNormalesSolicitadosHoyAsync(fechaFiltro);
+            ViewBag.NormalesIniciales = await _empleadoService.ObtenerPlatillosNormalesInicialesHoyAsync(fechaFiltro);
+
+            ViewBag.VentasHoy = await _empleadoService.ObtenerVentasTotalesHoyAsync(fechaFiltro);
+            ViewBag.ReservasHoy = await _empleadoService.ObtenerTotalReservasHoyAsync(fechaFiltro);
+
+            int usuariosConReserva = await _empleadoService.ObtenerUsuariosConReservasHoyAsync(fechaFiltro);
+            int totalUsuarios = await _empleadoService.ObtenerTotalUsuariosRegistradosAsync();
+
+            // Formateamos el texto tal como lo pediste: "X con reservas hoy / Y registrados"
+            ViewBag.TextoUsuarios = $"{usuariosConReserva} con reservas hoy / {totalUsuarios} registrados";
+
+            // Mantenemos la fecha actual o seleccionada para el formulario de filtro en la vista
+            ViewBag.FechaFiltroSeleccionada = fechaFiltro?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
+
             return View();
         }
 
@@ -112,5 +134,28 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
 
             return File(bytesPdf, "application/pdf", nombreArchivo);
         }
+
+
+
+
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> DescargarExcelAdmin(DateTime? fechaFiltro)
+        {
+            // Reutilizamos la lógica del servicio para generar los bytes del Excel filtrado por fecha
+            var archivoBytes = await _empleadoService.GenerarExcelHistorialFiltradoAsync(0, fechaFiltro, fechaFiltro);
+            return File(archivoBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"ReporteAdmin_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DescargarPdfAdmin(DateTime? fechaFiltro)
+        {
+            var archivoBytes = await _empleadoService.GenerarPdfHistorialFiltradoAsync(0, fechaFiltro, fechaFiltro);
+            return File(archivoBytes, "application/pdf", $"ReporteAdmin_{DateTime.Now:yyyyMMdd}.pdf");
+        }
+
     }
 }

@@ -115,7 +115,17 @@
                                         <i class="bi bi-egg-fried"></i> Hacer Reserva
                                     </a>
                                 </li>
+                                <!-- NUEVO: Añadimos el historial para que el Administrador también pueda ver sus pedidos -->
+                                <li class="nav-item">
+                                    <a class="nav-btn" asp-controller="Empleado" asp-action="Historial">
+                                        <i class="bi bi-journal-text"></i> Mi Historial
+                                    </a>
+                                </li>
                             }
+
+
+
+
                             else if (User.IsInRole("Cocina"))
                             {
                                 <li class="nav-item">
@@ -127,12 +137,17 @@
                                     <a class="nav-btn" asp-controller="Empleado" asp-action="Index">
                                         <i class="bi bi-egg-fried"></i> Hacer Reserva
                                     </a>
+
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-btn" asp-controller="Empleado" asp-action="Historial">
                                         <i class="bi bi-journal-text"></i> Mis Reservas
                                     </a>
                                 </li>
+
+
+
+
                             }
                             else if (User.IsInRole("Empleado"))
                             {
@@ -148,6 +163,9 @@
                                 </li>
                             }
                         }
+
+
+
                     </ul>
 
                     <!-- ÁREA DERECHA: USUARIO CONECTADO Y BOTÓN SALIR -->
@@ -185,5 +203,9 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+
+
+
 </body>
 </html>

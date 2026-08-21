@@ -1,120 +1,149 @@
 ﻿@model RestauranteIntecapWeb_MLMG.Models.DTOs.DashboardDTO
 
 @{
-    ViewData["Title"] = "Dashboard Administrador";
+    ViewData["Title"] = "Panel de Administración";
 }
 
 <div class="container-fluid mt-3 mb-5">
-    <!-- ENCABEZADO CON BOTONES DE ACCIÓN RÁPIDA -->
-    <div class="card shadow-sm border-0 mb-4 rounded-3">
-        <div class="card-body bg-light p-3">
-            <div class="row align-items-center">
-                <!-- Envolvemos todo en un div que contenga la clase text-center -->
-<div class="text-center my-4">
-    <h3 class="text-primary fw-bold mb-1">👨‍💼 Panel de Administración</h3>
-    <p class="text-muted mb-0">Métricas en tiempo real, rendimiento de ventas y control del sistema.</p>
-</div>
-              
+    <!-- ENCABEZADO -->
+    <div class="row align-items-center mb-4">
+        <div class="col-12">
+            <h3 class="text-primary fw-bold text-center">👨‍💼 Panel de Administración</h3>
+            <p class="text-muted text-center mb-0">Métricas en tiempo real, rendimiento de ventas y control del sistema.</p>
+        </div>
+    </div>
+
+    <!-- 4 TARJETAS DE MÉTRICAS CON LOS NUEVOS COLORES -->
+    <div class="row g-4 mb-5">
+
+        <!-- Tarjeta 1: Platillos de Dieta (Color: Azul claro #ADD8E6) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-3 p-3 h-100" style="background-color: #ADD8E6;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-dark small fw-bold text-uppercase">🥗 Platillos de Dieta</span>
+                        <h4 class="fw-bold text-dark mt-2 mb-0">
+                            @ViewBag.DietaSolicitados solicitados / @ViewBag.DietaIniciales iniciales
+                        </h4>
+                    </div>
+                    <div class="fs-1 text-primary">🌿</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 2: Platillos Normales (Color: Verde lima claro #9ACD32) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-3 p-3 h-100" style="background-color: #9ACD32;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-dark small fw-bold text-uppercase">🍽️ Platillos Normales</span>
+                        <h4 class="fw-bold text-dark mt-2 mb-0">
+                            @ViewBag.NormalesSolicitados solicitados / @ViewBag.NormalesIniciales iniciales
+                        </h4>
+                    </div>
+                    <div class="fs-1 text-success">🍛</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 3: Ventas de Hoy (Color: Naranja coral #FF7F50) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-3 p-3 h-100" style="background-color: #FF7F50;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-white small fw-bold text-uppercase">💰 Ventas de Hoy</span>
+                        <h4 class="fw-bold text-white mt-2 mb-0">
+                            Q @string.Format("{0:F2}", ViewBag.VentasHoy ?? 0m)
+                        </h4>
+                    </div>
+                    <div class="fs-1 text-warning">💵</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta 4: Reservas de Hoy (Color: Rosa lavanda #FFF0F5) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-3 p-3 h-100" style="background-color: #FFF0F5;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-dark small fw-bold text-uppercase">🍽️ Reservas de Hoy</span>
+                        <h4 class="fw-bold text-dark mt-2 mb-0">
+                            @ViewBag.ReservasHoy solicitudes
+                        </h4>
+                    </div>
+                    <div class="fs-1 text-danger">📋</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TARJETA ADICIONAL: USUARIOS (Mantenida de forma limpia) -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-dark text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-light small fw-bold text-uppercase">👥 Usuarios del Sistema</span>
+                        <h5 class="fw-bold text-info mt-1 mb-0">
+                            @ViewBag.TextoUsuarios
+                        </h5>
+                    </div>
+                    <div class="fs-2">👤</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- TARJETAS DE INDICADORES EN TIEMPO REAL (KPIS) -->
-    <div class="row mb-4">
-        <!-- Tarjeta 1: Recaudación Monetaria -->
-        <div class="col-xl-3 col-md-6 col-12 mb-3">
-            <div class="card border-0 shadow-sm rounded-3 bg-success text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-1">Ventas de Hoy</h6>
-                            <h2 class="fw-bold mb-0">Q @(Model?.TotalMontoRecaudadoHoy.ToString("F2") ?? "0.00")</h2>
-                        </div>
-                        <div class="fs-1">💰</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tarjeta 2: Reservas del Día -->
-        <div class="col-xl-3 col-md-6 col-12 mb-3">
-            <div class="card border-0 shadow-sm rounded-3 bg-primary text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-1">Reservas Hoy</h6>
-                            <h2 class="fw-bold mb-0">@(Model?.TotalReservasHoy ?? 0) solicitudes</h2>
-                        </div>
-                        <div class="fs-1">🍽️</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tarjeta 3: Platillo Más Vendido -->
-        <div class="col-xl-3 col-md-6 col-12 mb-3">
-            <div class="card border-0 shadow-sm rounded-3 bg-warning text-dark h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-dark-50 text-uppercase fw-bold mb-1">Platillo Estrella</h6>
-                            <h5 class="fw-bold mb-0">@(Model?.PlatilloMasVendido ?? "Sin ventas")</h5>
-                        </div>
-                        <div class="fs-1">⭐</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tarjeta 4: Total Usuarios Registrados -->
-        <div class="col-xl-3 col-md-6 col-12 mb-3">
-            <div class="card border-0 shadow-sm rounded-3 bg-dark text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-white-50 text-uppercase fw-bold mb-1">Personal Total</h6>
-                            <h2 class="fw-bold mb-0">@(Model?.TotalUsuarios ?? 0) usuarios</h2>
-                        </div>
-                        <div class="fs-1">👥</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PANEL DE REPORTES Y DESCARGAS GLOBALES -->
+    <!-- NUEVA SECCIÓN DE RESUMEN DETALLADO CON FILTRO POR FECHA (Reemplaza los reportes ejecutivos) -->
     <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">📄 Reportes Ejecutivos del Sistema</h5>
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 fw-bold">📊 Resumen Estadístico Detallado por Fecha</h5>
         </div>
-        <div class="card-body bg-light">
-            <form method="get" asp-action="DescargarReporteExcel" target="_blank" class="row g-3 align-items-end">
-                <div class="col-md-3 col-6">
-                    <label class="form-label fw-bold small">Fecha Inicio:</label>
-                    <input type="date" name="FechaInicio" class="form-control form-control-sm" />
+        <div class="card-body">
+            <!-- Formulario de Filtro por Fecha -->
+            <form method="get" asp-action="Index" class="row g-3 align-items-end mb-4">
+                <div class="col-md-4 col-12">
+                    <label class="form-label small fw-bold">Seleccionar Fecha de Análisis:</label>
+                    <input type="date" name="fechaFiltro" class="form-control" value="@ViewBag.FechaFiltroSeleccionada" />
                 </div>
-                <div class="col-md-3 col-6">
-                    <label class="form-label fw-bold small">Fecha Fin:</label>
-                    <input type="date" name="FechaFin" class="form-control form-control-sm" />
+                <div class="col-md-2 col-12">
+                    <button type="submit" class="btn btn-dark w-100 fw-bold">🔍 Filtrar</button>
                 </div>
-                <div class="col-md-3 col-6">
-                    <label class="form-label fw-bold small">Estado Reserva:</label>
-                    <select name="Estado" class="form-select form-select-sm">
-                        <option value="Todos">Todos los estados</option>
-                        <option value="Activa">Activa</option>
-                        <option value="Cancelada">Cancelada</option>
-                        <option value="Entregada">Entregada</option>
-                    </select>
-                </div>
-                <div class="col-md-3 col-6 d-flex gap-2">
-                    <button type="submit" class="btn btn-success btn-sm fw-bold w-100">
-                        📊 Exportar Excel
-                    </button>
-                    <button type="submit" asp-action="DescargarReportePdf" class="btn btn-danger btn-sm fw-bold w-100">
-                        📄 Descargar PDF
-                    </button>
-                </div>
+
+
+
+
+
+            
+
+
+
             </form>
+
+            <hr />
+
+            <!-- Tabla o Tarjetas de Resumen con los datos reales obtenidos -->
+            <div class="row text-center">
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 bg-light rounded border">
+                        <span class="text-muted small d-block">Total de Ventas en la Fecha</span>
+                        <h4 class="fw-bold text-success">Q @string.Format("{0:F2}", ViewBag.VentasHoy ?? 0m)</h4>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 bg-light rounded border">
+                        <span class="text-muted small d-block">Total de Reservas Activas</span>
+                        <h4 class="fw-bold text-primary">@ViewBag.ReservasHoy</h4>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 bg-light rounded border">
+                        <span class="text-muted small d-block">Usuarios que Reservaron</span>
+                        <h4 class="fw-bold text-dark">@ViewBag.TextoUsuarios</h4>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
