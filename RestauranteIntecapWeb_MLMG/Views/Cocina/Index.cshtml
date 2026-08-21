@@ -64,7 +64,7 @@
         <!-- PESTAÑA 1: GESTIÓN DE MENÚ -->
         <div class="tab-pane fade show active" id="tab-menu" role="tabpanel">
             <div class="row">
-                <!-- Formulario de Registro Lateral -->
+                <!-- Formulario de Registro Lateral unificado y limpio -->
                 <div class="col-lg-4 col-12 mb-4">
                     <div class="card shadow-sm border-0 rounded-3">
                         <div class="card-header bg-primary text-white font-weight-bold">
@@ -104,8 +104,16 @@
                                         </div>
                                     </div>
                                     <div class="col-6">
+                                        <label class="form-label fw-bold small">Fecha Menú</label>
                                         <input type="date" name="fecha" class="form-control" value="@fechaSel.ToString("yyyy-MM-dd")" required />
                                     </div>
+                                </div>
+
+                                <!-- CAMPO UNIFICADO DE HABILITACIÓN PROGRAMADA (Sin duplicidades) -->
+                                <div class="mb-3">
+                                    <label for="hora_habilitacion" class="form-label fw-bold">Programar Publicación (Fecha y Hora)</label>
+                                    <input type="datetime-local" class="form-control" id="hora_habilitacion" name="hora_habilitacion" required />
+                                    <div class="form-text text-muted small">Los empleados verán este platillo a partir de la fecha y hora seleccionada.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -118,6 +126,10 @@
                         </div>
                     </div>
                 </div>
+
+
+
+
 
                 <!-- Tabla de Platillos Registrados -->
                 <div class="col-lg-8 col-12">
@@ -363,6 +375,7 @@
                     $('#edit_precio').val(data.precio);
                     $('#edit_stock').val(data.stock);
                     $('#edit_es_dieta').prop('checked', data.es_dieta);
+                   
                     if (data.fecha) {
                         $('#edit_fecha').val(data.fecha.split('T')[0]);
                     }

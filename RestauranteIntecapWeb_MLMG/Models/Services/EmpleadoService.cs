@@ -20,11 +20,18 @@ namespace RestauranteIntecapWeb_MLMG.Services
             _context = context;
         }
 
-        // 1. Obtiene platillos disponibles para una fecha específica respetando el contrato exacto
-        public async Task<List<MenuDiario>> ObtenerMenuDisponiblePorFechaAsync(DateTime fecha)
+
+
+        // 1. Obtiene platillos disponibles para una fecha específica y valida la hora de habilitación programada
+     
+       public async Task<List<MenuDiario>> ObtenerMenuDisponiblePorFechaAsync(DateTime fecha)
         {
+            var horaActual = DateTime.Now;
+
             return await _context.MenusDiarios
-                .Where(m => m.fecha.Date == fecha.Date && m.stock > 0)
+                .Where(m => m.fecha.Date == fecha.Date &&
+                            m.stock > 0 &&
+                            m.hora_habilitacion <= horaActual) // Comparamos DateTime con DateTime de forma exacta
                 .OrderBy(m => m.nombre_plato) // Ordenamiento alfabético A-Z
                 .ToListAsync();
         }

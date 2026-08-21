@@ -89,11 +89,20 @@ namespace RestauranteIntecapWeb_MLMG.Models
 
         public DateTime fecha { get; set; }
 
+        public DateTime hora_habilitacion { get; set; }
+
+
         public bool es_dieta { get; set; } = false;
 
         [Required]
         [StringLength(20)]
         public string estado { get; set; } = "Disponible";
+
+
+      
+
+
+
     }
 
     // Tabla Reservas
