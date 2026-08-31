@@ -119,7 +119,8 @@ namespace RestauranteIntecapWeb_MLMG.Services
                     DondeConsume = r.donde_consume,
                     FormaPago = r.FormaPago!.nombre,
                     FechaReserva = r.fecha_reserva,
-                    Estado = r.estado
+                    Estado = r.estado,
+                    EstadoPlatillo = r.MenuDiario.estado
                 })
                 .ToListAsync();
         }
@@ -129,13 +130,14 @@ namespace RestauranteIntecapWeb_MLMG.Services
         {
             return await _context.Reservas
                 .Where(r => r.fecha_consumo.Date == fecha.Date && r.estado == "Activa")
-                .GroupBy(r => new { r.menu_id, r.MenuDiario!.nombre_plato, r.MenuDiario.precio, r.MenuDiario.es_dieta })
+                .GroupBy(r => new { r.menu_id, r.MenuDiario!.nombre_plato, r.MenuDiario.precio, r.MenuDiario.es_dieta, r.MenuDiario.estado })
                 .Select(g => new PlatilloConsolidadoDTO
                 {
                     MenuId = g.Key.menu_id,
                     NombrePlato = g.Key.nombre_plato,
                     Precio = g.Key.precio,
                     EsDieta = g.Key.es_dieta,
+                    EstadoPlatillo = g.Key.estado,
                     TotalSolicitado = g.Sum(r => r.cantidad),
                     TotalRecaudado = g.Sum(r => r.cantidad * g.Key.precio)
                 })
@@ -158,6 +160,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 worksheet.Cell(1, 5).Value = "¿Dónde consume?";
                 worksheet.Cell(1, 6).Value = "Forma de Pago";
                 worksheet.Cell(1, 7).Value = "Hora Reserva";
+                worksheet.Cell(1, 8).Value = "Estado Platillo";
 
                 var headerRow = worksheet.Row(1);
                 headerRow.Style.Font.Bold = true;
@@ -174,6 +177,22 @@ namespace RestauranteIntecapWeb_MLMG.Services
                     worksheet.Cell(row, 5).Value = item.DondeConsume;
                     worksheet.Cell(row, 6).Value = item.FormaPago;
                     worksheet.Cell(row, 7).Value = item.FechaReserva.ToString("HH:mm:ss");
+
+                    // Columna de Estado del Platillo con formato condicional
+                    var cellEstado = worksheet.Cell(row, 8);
+                    cellEstado.Value = item.EstadoPlatillo;
+
+                    if (item.EstadoPlatillo == "Disponible")
+                    {
+                        cellEstado.Style.Fill.BackgroundColor = XLColor.FromHtml("#28A745"); // Verde
+                        cellEstado.Style.Font.FontColor = XLColor.White;
+                    }
+                    else if (item.EstadoPlatillo == "Inactivo")
+                    {
+                        cellEstado.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFC107"); // Amarillo
+                        cellEstado.Style.Font.FontColor = XLColor.Black;
+                    }
+
                     row++;
                 }
 
@@ -217,6 +236,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                             cols.ConstantColumn(35);
                             cols.RelativeColumn(2);
                             cols.RelativeColumn(2);
+                            cols.RelativeColumn(2);
                         });
 
                         table.Header(header =>
@@ -227,6 +247,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Cant").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Consumo").FontColor(Colors.White).Bold();
                             header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Pago").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Blue.Medium).Padding(4).Text("Estado").FontColor(Colors.White).Bold();
                         });
 
                         int i = 1;
@@ -238,6 +259,21 @@ namespace RestauranteIntecapWeb_MLMG.Services
                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(res.Cantidad.ToString());
                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(res.DondeConsume);
                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(res.FormaPago);
+
+                            // Celda de Estado con formato visual
+                            var cellEstado = table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4);
+                            if (res.EstadoPlatillo == "Disponible")
+                            {
+                                cellEstado.Background(Colors.Green.Lighten3).Text("Disponible").FontSize(8).Bold();
+                            }
+                            else if (res.EstadoPlatillo == "Inactivo")
+                            {
+                                cellEstado.Background(Colors.Yellow.Lighten3).Text("Deshabilitado").FontSize(8).Bold();
+                            }
+                            else
+                            {
+                                cellEstado.Text(res.EstadoPlatillo).FontSize(8);
+                            }
                         }
                     });
 

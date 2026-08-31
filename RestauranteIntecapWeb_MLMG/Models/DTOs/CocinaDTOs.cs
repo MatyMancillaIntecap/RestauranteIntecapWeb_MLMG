@@ -9,6 +9,7 @@
         public int TotalSolicitado { get; set; }
         public decimal TotalRecaudado { get; set; }
         public bool EsDieta { get; set; }
+        public string EstadoPlatillo { get; set; } = null!;
     }
 
     // DTO para representar el detalle individual de una persona que realizó una reserva
@@ -23,5 +24,6 @@
         public string FormaPago { get; set; } = null!;
         public DateTime FechaReserva { get; set; }
         public string Estado { get; set; } = null!;
+        public string EstadoPlatillo { get; set; } = null!;
     }
 }

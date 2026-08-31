@@ -23,7 +23,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
 
         // 1. Obtiene platillos disponibles para una fecha específica y valida la hora de habilitación programada
-     
+
        public async Task<List<MenuDiario>> ObtenerMenuDisponiblePorFechaAsync(DateTime fecha)
         {
             var horaActual = DateTime.Now;
@@ -31,6 +31,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
             return await _context.MenusDiarios
                 .Where(m => m.fecha.Date == fecha.Date &&
                             m.stock > 0 &&
+                            m.estado == "Disponible" &&
                             m.hora_habilitacion <= horaActual) // Comparamos DateTime con DateTime de forma exacta
                 .OrderBy(m => m.nombre_plato) // Ordenamiento alfabético A-Z
                 .ToListAsync();
@@ -69,11 +70,16 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
             DateTime fechaConsumo = menuPrincipal.fecha.Date;
 
-            // INGENIERÍA DE SOFTWARE: Calcular cuántos platillos YA ha reservado este usuario para este mismo día (excluyendo canceladas)
+            // INGENIERÍA DE SOFTWARE: Calcular cuántos platillos YA ha reservado este usuario para este mismo día
+            // IMPORTANTE: Solo se cuentan las reservas activas de platillos que estén disponibles (no deshabilitados)
+            // Si un platillo es deshabilitado por Cocina, su reserva se mantiene como registro histórico,
+            // pero deja de contar para el límite del usuario, liberando ese cupo para una nueva selección.
             int platillosYaReservadosHoy = await _context.Reservas
+                .Include(r => r.MenuDiario)
                 .Where(r => r.usuario_id == solicitud.UsuarioId &&
                             r.fecha_consumo.Date == fechaConsumo &&
-                            r.estado == "Activa")
+                            r.estado == "Activa" &&
+                            r.MenuDiario!.estado == "Disponible")
                 .SumAsync(r => r.cantidad);
 
             int totalSolicitadosAhora = solicitud.Platillos.Sum(p => p.Cantidad);

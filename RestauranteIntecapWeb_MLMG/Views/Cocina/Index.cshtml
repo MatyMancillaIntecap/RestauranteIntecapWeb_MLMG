@@ -164,6 +164,19 @@
                                                         {
                                                             <br><span class="badge bg-info text-dark" style="font-size: 0.7rem;">🌿 Dieta</span>
                                                         }
+                                                        <br>
+                                                        @if (plato.estado == "Disponible")
+                                                        {
+                                                            <span class="badge bg-success" style="font-size: 0.7rem;">✅ Habilitado</span>
+                                                        }
+                                                        else if (plato.estado == "Inactivo")
+                                                        {
+                                                            <span class="badge bg-secondary" style="font-size: 0.7rem;">🚫 Deshabilitado</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">@plato.estado</span>
+                                                        }
                                                     </td>
                                                     <td>
                                                         <span class="text-success fw-bold">Q @plato.precio.ToString("F2")</span>
@@ -185,6 +198,18 @@
                                                         <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalEditar(@plato.id)" title="Editar">
                                                             ✏️
                                                         </button>
+                                                        @if (plato.estado == "Disponible")
+                                                        {
+                                                            <button class="btn btn-sm btn-outline-warning me-1" onclick="cambiarEstadoPlatillo(@plato.id, 'Inactivo')" title="Deshabilitar platillo">
+                                                                🚫
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn-sm btn-outline-success me-1" onclick="cambiarEstadoPlatillo(@plato.id, 'Disponible')" title="Habilitar platillo">
+                                                                ✅
+                                                            </button>
+                                                        }
                                                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(@plato.id)" title="Eliminar">
                                                             🗑️
                                                         </button>
@@ -220,10 +245,26 @@
                             @foreach (var item in consolidado)
                             {
                                 <div class="col-md-4 col-12 mb-3">
-                                    <div class="card border-primary h-100 shadow-sm">
+                                    <div class="card @(item.EstadoPlatillo == "Inactivo" ? "border-warning" : "border-primary") h-100 shadow-sm">
                                         <div class="card-body">
-                                            <h5 class="card-title fw-bold text-primary">@item.NombrePlato</h5>
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <h5 class="card-title fw-bold @(item.EstadoPlatillo == "Inactivo" ? "text-warning" : "text-primary")">@item.NombrePlato</h5>
+                                                @if (item.EstadoPlatillo == "Inactivo")
+                                                {
+                                                    <span class="badge bg-warning text-dark">⚠️ Deshabilitado</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">✅ Activo</span>
+                                                }
+                                            </div>
                                             <p class="text-muted mb-1">Precio Unitario: Q @item.Precio.ToString("F2")</p>
+                                            @if (item.EstadoPlatillo == "Inactivo")
+                                            {
+                                                <div class="alert alert-warning py-1 px-2 mb-2 small">
+                                                    <strong>Nota:</strong> Este platillo fue deshabilitado. Las reservas se mantienen registradas.
+                                                </div>
+                                            }
                                             <hr />
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="fs-6 text-secondary">Solicitudes:</span>
@@ -267,6 +308,7 @@
                                     <th>¿Dónde Consume?</th>
                                     <th>Forma de Pago</th>
                                     <th>Hora Reserva</th>
+                                    <th>Estado Platillo</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -286,13 +328,27 @@
                                             <td><span class="badge bg-info text-dark">@res.DondeConsume</span></td>
                                             <td><span class="badge bg-success">@res.FormaPago</span></td>
                                             <td>@res.FechaReserva.ToString("HH:mm:ss")</td>
+                                            <td>
+                                                @if (res.EstadoPlatillo == "Disponible")
+                                                {
+                                                    <span class="badge bg-success">✅ Disponible</span>
+                                                }
+                                                else if (res.EstadoPlatillo == "Inactivo")
+                                                {
+                                                    <span class="badge bg-warning text-dark">⚠️ Deshabilitado</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@res.EstadoPlatillo</span>
+                                                }
+                                            </td>
                                         </tr>
                                     }
                                 }
                                 else
                                 {
                                     <tr>
-                                        <td colspan="7" class="text-center py-4 text-muted">Sin registros de reservas para esta fecha.</td>
+                                        <td colspan="8" class="text-center py-4 text-muted">Sin registros de reservas para esta fecha.</td>
                                     </tr>
                                 }
                             </tbody>
@@ -397,6 +453,24 @@
                     })
                     .fail(function(xhr) {
                         alert(xhr.responseText || "No se pudo eliminar el platillo.");
+                    });
+            }
+        }
+
+        function cambiarEstadoPlatillo(id, nuevoEstado) {
+            var accion = nuevoEstado === "Disponible" ? "habilitar" : "deshabilitar";
+            var mensaje = nuevoEstado === "Inactivo" 
+                ? "¿Está seguro de deshabilitar este platillo?\n\nEsto evitará que los empleados puedan hacer nuevas reservas, pero las reservas existentes se mantendrán intactas."
+                : "¿Desea habilitar este platillo para permitir nuevas reservas?";
+
+            if (confirm(mensaje)) {
+                $.post('/Cocina/CambiarEstado', { id: id, nuevoEstado: nuevoEstado })
+                    .done(function() {
+                        alert("El platillo ha sido " + (nuevoEstado === "Disponible" ? "habilitado" : "deshabilitado") + " exitosamente.");
+                        location.reload();
+                    })
+                    .fail(function() {
+                        alert("Error al cambiar el estado del platillo.");
                     });
             }
         }
