@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RestauranteIntecapWeb_MLMG.Models.DTOs;
 using RestauranteIntecapWeb_MLMG.Services;
 
 namespace RestauranteIntecapWeb_MLMG.Controllers
 {
+    [Authorize(Roles = "Administrador")]
     public class AdminController : Controller
     {
         private readonly IAdminService _adminService;
@@ -36,6 +38,7 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
 
             // Formateamos el texto tal como lo pediste: "X con reservas hoy / Y registrados"
             ViewBag.TextoUsuarios = $"{usuariosConReserva} con reservas hoy / {totalUsuarios} registrados";
+            ViewBag.SolicitudesPasswordPendientes = await _adminService.ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
 
             // Mantenemos la fecha actual o seleccionada para el formulario de filtro en la vista
             ViewBag.FechaFiltroSeleccionada = fechaFiltro?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
@@ -48,6 +51,7 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
         {
             var usuarios = await _adminService.ObtenerTodosLosUsuariosAsync();
             ViewBag.Roles = await _adminService.ObtenerRolesAsync();
+            ViewBag.SolicitudesPasswordPendientes = await _adminService.ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
             return View(usuarios);
         }
 
@@ -91,6 +95,29 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             var resultado = await _adminService.CambiarEstadoUsuarioAsync(id, activo);
             if (!resultado) return BadRequest();
             return Ok();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SolicitudesRestablecimiento()
+        {
+            var solicitudes = await _adminService.ObtenerSolicitudesRestablecimientoAsync();
+            ViewBag.SolicitudesPasswordPendientes = await _adminService.ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
+            return View(solicitudes);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AtenderSolicitudRestablecimiento(AtenderSolicitudRestablecimientoDTO dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Debe completar la contraseña nueva antes de atender la solicitud.";
+                return RedirectToAction(nameof(SolicitudesRestablecimiento));
+            }
+
+            var (exito, mensaje) = await _adminService.AtenderSolicitudRestablecimientoAsync(dto);
+            TempData[exito ? "Exito" : "Error"] = mensaje;
+            return RedirectToAction(nameof(SolicitudesRestablecimiento));
         }
 
         // Action para exportar reporte Excel global filtrado

@@ -14,6 +14,7 @@ namespace RestauranteIntecapWeb_MLMG.Data
         public DbSet<MenuDiario> MenusDiarios { get; set; } = null!;
         public DbSet<Reserva> Reservas { get; set; } = null!;
         public DbSet<HistorialLogin> HistorialLogins { get; set; } = null!;
+        public DbSet<SolicitudRestablecimientoPassword> SolicitudesRestablecimientoPassword { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +26,7 @@ namespace RestauranteIntecapWeb_MLMG.Data
             modelBuilder.Entity<MenuDiario>().ToTable("menu_diario");
             modelBuilder.Entity<Reserva>().ToTable("reservas");
             modelBuilder.Entity<HistorialLogin>().ToTable("historial_login");
+            modelBuilder.Entity<SolicitudRestablecimientoPassword>().ToTable("solicitudes_restablecimiento_password");
         }
     }
 }

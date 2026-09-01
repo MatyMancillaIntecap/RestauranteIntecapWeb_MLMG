@@ -27,7 +27,31 @@
         public int MaxAlmuerzos { get; set; } = 2; // Permite modificar el límite desde el modal
     }
 
+    // DTO para listar las solicitudes de restablecimiento de contraseña
+    public class SolicitudRestablecimientoPasswordDTO
+    {
+        public int Id { get; set; }
+        public int UsuarioId { get; set; }
+        public string NombreUsuario { get; set; } = null!;
+        public string EmailUsuario { get; set; } = null!;
+        public DateTime FechaSolicitud { get; set; }
+        public DateTime? FechaAtencion { get; set; }
+        public string Estado { get; set; } = "Pendiente";
+    }
 
+    // DTO para que el usuario solicite el restablecimiento sin exponer contraseñas
+    public class SolicitudRestablecimientoInputDTO
+    {
+        public string Identificador { get; set; } = null!;
+    }
+
+    // DTO para que el administrador asigne una nueva contraseña
+    public class AtenderSolicitudRestablecimientoDTO
+    {
+        public int SolicitudId { get; set; }
+        public string NuevaPassword { get; set; } = null!;
+    }
 }
+
 
 

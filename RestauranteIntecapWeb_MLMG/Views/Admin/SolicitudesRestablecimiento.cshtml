@@ -1,0 +1,149 @@
+@model IEnumerable<RestauranteIntecapWeb_MLMG.Models.DTOs.SolicitudRestablecimientoPasswordDTO>
+
+@{
+    ViewData["Title"] = "Solicitudes de Restablecimiento";
+    var pendientes = ViewBag.SolicitudesPasswordPendientes ?? 0;
+}
+
+<div class="container-fluid mt-3 mb-5">
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-body bg-light p-3">
+            <div class="row align-items-center">
+                <div class="col-md-8 col-12">
+                    <h3 class="text-primary fw-bold mb-1">🔐 Solicitudes de restablecimiento</h3>
+                    <p class="text-muted mb-0">Revisa las solicitudes pendientes y asigna una nueva contraseña de forma segura.</p>
+                </div>
+                <div class="col-md-4 col-12 text-md-end mt-2 mt-md-0">
+                    <span class="badge bg-warning text-dark fs-6 p-2">Solicitudes de contraseña: @pendientes pendientes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show fw-bold" role="alert">
+            ⚠️ @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show fw-bold" role="alert">
+            ✅ @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#ID</th>
+                            <th>Usuario</th>
+                            <th>Correo</th>
+                            <th>Fecha solicitud</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td><strong>#@item.Id</strong></td>
+                                    <td>@item.NombreUsuario</td>
+                                    <td>@item.EmailUsuario</td>
+                                    <td>@item.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (item.Estado == "Pendiente")
+                                        {
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        }
+                                        else if (item.Estado == "Atendida")
+                                        {
+                                            <span class="badge bg-success">Atendida</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@item.Estado</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Estado == "Pendiente")
+                                        {
+                                            <button class="btn btn-sm btn-primary fw-bold"
+                                                    onclick="abrirModalAtencion(@item.Id, '@item.NombreUsuario', '@item.EmailUsuario')">
+                                                Asignar contraseña
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Atendida</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">No hay solicitudes registradas.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAtencionSolicitud" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Atender solicitud</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AtenderSolicitudRestablecimiento" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="SolicitudId" id="solicitud_id" />
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Usuario</label>
+                        <input type="text" id="solicitud_usuario" class="form-control" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Correo</label>
+                        <input type="text" id="solicitud_correo" class="form-control" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva contraseña</label>
+                        <input type="password" name="NuevaPassword" class="form-control" placeholder="Ingrese la nueva contraseña" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function abrirModalAtencion(id, usuario, correo) {
+            document.getElementById('solicitud_id').value = id;
+            document.getElementById('solicitud_usuario').value = usuario;
+            document.getElementById('solicitud_correo').value = correo;
+            const modal = new bootstrap.Modal(document.getElementById('modalAtencionSolicitud'));
+            modal.show();
+        }
+    </script>
+}

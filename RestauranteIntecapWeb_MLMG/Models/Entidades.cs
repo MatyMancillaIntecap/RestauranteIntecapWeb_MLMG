@@ -159,4 +159,25 @@ namespace RestauranteIntecapWeb_MLMG.Models
         [ForeignKey("usuario_id")]
         public virtual Usuario? Usuario { get; set; }
     }
+
+    // Tabla Solicitudes de Restablecimiento de Contraseña
+    [Table("solicitudes_restablecimiento_password")]
+    public class SolicitudRestablecimientoPassword
+    {
+        [Key]
+        public int id { get; set; }
+
+        public int usuario_id { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        public string estado { get; set; } = "Pendiente";
+
+        public DateTime fecha_solicitud { get; set; } = DateTime.Now;
+
+        public DateTime? fecha_atencion { get; set; }
+
+        [ForeignKey("usuario_id")]
+        public virtual Usuario? Usuario { get; set; }
+    }
 }

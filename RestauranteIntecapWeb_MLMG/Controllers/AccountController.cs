@@ -16,18 +16,14 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             _authService = authService;
         }
 
-        // Muestra la vista del Login
+        // Muestra la vista del Login (GET)
         [HttpGet]
         public IActionResult Login()
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                return RedirigirSegunRol();
-            }
             return View();
         }
 
-        // Procesa el formulario de Inicio de Sesión
+        // Procesa el formulario de Inicio de Sesión (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
@@ -37,15 +33,16 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
                 return View(model);
             }
 
+            // Validamos las credenciales utilizando el contrato de servicio existente
             var (exito, mensaje, usuario) = await _authService.ValidarCredencialesAsync(model);
 
             if (!exito || usuario == null)
             {
-                ModelState.AddModelError("", mensaje);
+                ModelState.AddModelError(string.Empty, mensaje ?? "Correo electrónico o contraseña incorrectos.");
                 return View(model);
             }
 
-            // Construir las declaraciones de identidad (Claims)
+            // Construir las declaraciones de identidad (Claims) para la sesión
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, usuario.id.ToString()),
@@ -60,7 +57,7 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
                 IsPersistent = model.Recordarme
             };
 
-            // Crear la cookie de sesión en el navegador
+            // Crear la cookie de sesión cifrada en el navegador
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity),
@@ -97,8 +94,34 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             };
         }
 
+        // Muestra la vista para solicitar el restablecimiento de contraseña (GET)
+        [HttpGet]
+        public IActionResult RecuperarPassword()
+        {
+            return View(new SolicitudRestablecimientoInputDTO());
+        }
+
+        // Procesa la solicitud de restablecimiento de contraseña (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecuperarPassword(SolicitudRestablecimientoInputDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var (exito, mensaje) = await _authService.CrearSolicitudRestablecimientoAsync(model);
+
+            if (!exito)
+            {
+                ModelState.AddModelError(string.Empty, mensaje);
+                return View(model);
+            }
+
+            ViewBag.Mensaje = mensaje;
+            ModelState.Clear();
+            return View(new SolicitudRestablecimientoInputDTO());
+        }
     }
-
-
-
 }

@@ -1,4 +1,5 @@
-﻿@{
+﻿@model LoginViewModel
+@{
     Layout = null; // Indicamos que esta pantalla no usa la barra de navegación general del sistema
     ViewData["Title"] = "Iniciar Sesión - Restaurante INTECAP";
 }
@@ -79,21 +80,28 @@
 
             <!-- FORMULARIO DE ACCESO -->
             <form asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger small mb-3"></div>
+                }
 
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-secondary">Correo Electrónico</label>
+                    <label asp-for="Email" class="form-label small fw-bold text-secondary">Correo Electrónico</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light">👤</span>
-                        <input type="email5" name="email" class="form-control" placeholder="admin@intecap.com" required />
+                        <input asp-for="Email" type="email" class="form-control" placeholder="admin@intecap.com" autocomplete="username" />
                     </div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-secondary">Contraseña</label>
+                    <label asp-for="Password" class="form-label small fw-bold text-secondary">Contraseña</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light">🔒</span>
-                        <input type="password" name="password" class="form-control" placeholder="••••" required />
+                        <input asp-for="Password" type="password" class="form-control" placeholder="••••" autocomplete="current-password" />
                     </div>
+                    <span asp-validation-for="Password" class="text-danger small"></span>
                 </div>
 
                 <div class="d-grid mb-3">
@@ -102,20 +110,10 @@
                     </button>
                 </div>
 
-                <div class="text-center small">
-                    <a href="#" class="text-decoration-none text-primary d-block mb-1">Restablecer Contraseña</a>
-
-
-
-
-                    <!--  <a href="#" class="text-decoration-none text-muted">Unicamente para personal de INTECAP</a> -->
-
-
-
-
-
+                <!-- Ubicado en la sección inferior del formulario de login en Login.cshtml -->
+                <div class="text-center mt-3">
+                    <a asp-controller="Account" asp-action="RecuperarPassword" class="text-decoration-none">Restablecer Contraseña</a>
                 </div>
-
             </form>
         </div>
     </div>

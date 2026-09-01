@@ -10,5 +10,8 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
         // Registra el acceso del usuario en la tabla historial_login
         Task RegistrarAccesoAsync(int usuarioId);
+
+        // Crea una solicitud de restablecimiento de contraseña para un usuario existente
+        Task<(bool Exito, string Mensaje)> CrearSolicitudRestablecimientoAsync(SolicitudRestablecimientoInputDTO model);
     }
 }

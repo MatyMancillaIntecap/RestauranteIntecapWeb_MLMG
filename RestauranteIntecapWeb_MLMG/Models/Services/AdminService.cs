@@ -1,5 +1,6 @@
 ﻿// DIRECTIVAS DE IMPORTACIÓN (Van siempre al inicio del archivo)
 using ClosedXML.Excel;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -13,6 +14,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
     public class AdminService : IAdminService
     {
         private readonly ApplicationDbContext _context;
+        private readonly PasswordHasher<Usuario> _passwordHasher = new();
 
         public AdminService(ApplicationDbContext context)
         {
@@ -83,7 +85,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 {
                     nombre = dto.Nombre,
                     email = dto.Email,
-                    password = dto.Password,
+                    password = _passwordHasher.HashPassword(new Usuario { email = dto.Email, nombre = dto.Nombre }, dto.Password),
                     rol_id = dto.RolId,
                     activo = dto.Activo,
                     nit_facturacion = string.IsNullOrWhiteSpace(dto.NitFacturacion) ? "C/F" : dto.NitFacturacion.Trim(),
@@ -105,7 +107,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
                 if (!string.IsNullOrWhiteSpace(dto.Password))
                 {
-                    usuarioExistente.password = dto.Password;
+                    usuarioExistente.password = _passwordHasher.HashPassword(usuarioExistente, dto.Password);
                 }
 
                 var rolAsociado = await _context.Roles.FindAsync(dto.RolId);
@@ -134,6 +136,69 @@ namespace RestauranteIntecapWeb_MLMG.Services
         public async Task<List<Rol>> ObtenerRolesAsync()
         {
             return await _context.Roles.ToListAsync();
+        }
+
+        // Solicitudes de restablecimiento de contraseña
+        public async Task<int> ObtenerCantidadSolicitudesRestablecimientoPendientesAsync()
+        {
+            return await _context.SolicitudesRestablecimientoPassword.CountAsync(s => s.estado == "Pendiente");
+        }
+
+        public async Task<List<SolicitudRestablecimientoPasswordDTO>> ObtenerSolicitudesRestablecimientoAsync()
+        {
+            return await _context.SolicitudesRestablecimientoPassword
+                .Include(s => s.Usuario)
+                .OrderByDescending(s => s.fecha_solicitud)
+                .Select(s => new SolicitudRestablecimientoPasswordDTO
+                {
+                    Id = s.id,
+                    UsuarioId = s.usuario_id,
+                    NombreUsuario = s.Usuario != null ? s.Usuario.nombre : "Desconocido",
+                    EmailUsuario = s.Usuario != null ? s.Usuario.email : string.Empty,
+                    FechaSolicitud = s.fecha_solicitud,
+                    FechaAtencion = s.fecha_atencion,
+                    Estado = s.estado
+                })
+                .ToListAsync();
+        }
+
+        public async Task<(bool Exito, string Mensaje)> AtenderSolicitudRestablecimientoAsync(AtenderSolicitudRestablecimientoDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NuevaPassword))
+            {
+                return (false, "La nueva contraseña es obligatoria.");
+            }
+
+            var solicitud = await _context.SolicitudesRestablecimientoPassword
+                .Include(s => s.Usuario)
+                .FirstOrDefaultAsync(s => s.id == dto.SolicitudId);
+
+            if (solicitud == null)
+            {
+                return (false, "La solicitud no existe.");
+            }
+
+            if (solicitud.estado != "Pendiente")
+            {
+                return (false, "La solicitud ya fue atendida o no está disponible.");
+            }
+
+            if (solicitud.Usuario == null)
+            {
+                return (false, "No se pudo identificar al usuario asociado a la solicitud.");
+            }
+
+            if (!solicitud.Usuario.activo)
+            {
+                return (false, "El usuario se encuentra desactivado.");
+            }
+
+            solicitud.Usuario.password = _passwordHasher.HashPassword(solicitud.Usuario, dto.NuevaPassword);
+            solicitud.estado = "Atendida";
+            solicitud.fecha_atencion = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return (true, "La contraseña se actualizó correctamente y la solicitud quedó como atendida.");
         }
 
         // 6. MÉTRICAS PARA DASHBOARD
