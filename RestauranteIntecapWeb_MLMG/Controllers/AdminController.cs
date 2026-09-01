@@ -115,9 +115,60 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
                 return RedirectToAction(nameof(SolicitudesRestablecimiento));
             }
 
+            var solicitud = (await _adminService.ObtenerSolicitudesRestablecimientoAsync())
+                .FirstOrDefault(s => s.Id == dto.SolicitudId);
+
             var (exito, mensaje) = await _adminService.AtenderSolicitudRestablecimientoAsync(dto);
-            TempData[exito ? "Exito" : "Error"] = mensaje;
+
+            if (!exito)
+            {
+                TempData["Error"] = LimpiarPrefijoMensaje(mensaje);
+                return RedirectToAction(nameof(SolicitudesRestablecimiento));
+            }
+
+            TempData["Exito"] = LimpiarPrefijoMensaje(mensaje);
+
+            if (solicitud != null)
+            {
+                TempData["CorreoAsunto"] = "Restablecimiento de contraseña – Restaurante Escuela INTECAP";
+                TempData["CorreoCuerpo"] = ConstruirCorreoCopiable(solicitud.NombreUsuario, solicitud.EmailUsuario, dto.NuevaPassword);
+            }
+
             return RedirectToAction(nameof(SolicitudesRestablecimiento));
+        }
+
+        private static string ConstruirCorreoCopiable(string nombreUsuario, string correoUsuario, string nuevaPassword)
+        {
+            return $"Estimado/a {nombreUsuario}:\n\n" +
+                   "Le informamos que su contraseña de acceso al sistema Restaurante Escuela INTECAP ha sido restablecida exitosamente por el administrador.\n\n" +
+                   "Sus nuevas credenciales de acceso son:\n\n" +
+                   $"Usuario: {correoUsuario}\n" +
+                   $"Contraseña temporal: {nuevaPassword}\n\n" +
+                   "Le recomendamos conservar estas credenciales en un lugar seguro y, si el sistema lo permite, cambiar su contraseña posteriormente.\n\n" +
+                   "Si usted no solicitó este cambio, por favor comuníquese con el administrador del sistema.\n\n" +
+                   "Saludos cordiales,\n" +
+                   "Administración\n" +
+                   "Restaurante Escuela INTECAP";
+        }
+
+        private static string LimpiarPrefijoMensaje(string mensaje)
+        {
+            if (mensaje.StartsWith("OK:"))
+            {
+                return mensaje[3..].Trim();
+            }
+
+            if (mensaje.StartsWith("WARN:"))
+            {
+                return mensaje[5..].Trim();
+            }
+
+            if (mensaje.StartsWith("ERR:"))
+            {
+                return mensaje[4..].Trim();
+            }
+
+            return mensaje;
         }
 
         // Action para exportar reporte Excel global filtrado

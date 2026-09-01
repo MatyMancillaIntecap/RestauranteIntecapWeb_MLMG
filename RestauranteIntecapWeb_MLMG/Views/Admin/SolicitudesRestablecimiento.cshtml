@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Solicitudes de Restablecimiento";
     var pendientes = ViewBag.SolicitudesPasswordPendientes ?? 0;
+    var correoAsunto = TempData["CorreoAsunto"] as string;
+    var correoCuerpo = TempData["CorreoCuerpo"] as string;
 }
 
 <div class="container-fluid mt-3 mb-5">
@@ -28,11 +30,38 @@
         </div>
     }
 
+    @if (TempData["Advertencia"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show fw-bold" role="alert">
+            ⚠️ @TempData["Advertencia"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     @if (TempData["Exito"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show fw-bold" role="alert">
             ✅ @TempData["Exito"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["CorreoAsunto"] != null && TempData["CorreoCuerpo"] != null)
+    {
+        <div class="card border-primary shadow-sm mb-4">
+            <div class="card-header bg-primary text-white fw-bold">
+                Correo listo para copiar y pegar en Outlook
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Asunto</label>
+                    <input type="text" class="form-control" readonly value="@correoAsunto" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Cuerpo del correo</label>
+                    <textarea class="form-control" rows="12" readonly style="white-space: pre-wrap;">@correoCuerpo</textarea>
+                </div>
+            </div>
         </div>
     }
 
@@ -68,6 +97,14 @@
                                         else if (item.Estado == "Atendida")
                                         {
                                             <span class="badge bg-success">Atendida</span>
+                                        }
+                                        else if (item.Estado == "AtendidaConErrorCorreo")
+                                        {
+                                            <span class="badge bg-danger">Atendida con error de correo</span>
+                                        }
+                                        else if (item.Estado == "AtendidaPendienteCorreo")
+                                        {
+                                            <span class="badge bg-info text-dark">En proceso de notificación</span>
                                         }
                                         else
                                         {

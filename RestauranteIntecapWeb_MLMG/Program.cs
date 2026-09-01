@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using RestauranteIntecapWeb_MLMG.Data;
+using RestauranteIntecapWeb_MLMG.Models.Configuration;
 using RestauranteIntecapWeb_MLMG.Services;
 using QuestPDF.Infrastructure;
-
 
 namespace RestauranteIntecapWeb_MLMG
 {
@@ -15,17 +15,21 @@ namespace RestauranteIntecapWeb_MLMG
 
             QuestPDF.Settings.License = LicenseType.Community;
 
-
             builder.Services.AddControllersWithViews();
 
             // Configurar la conexión a SQL Server
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSQL")));
 
+            // Configuración de correo (se completa por appsettings o variables de entorno)
+            builder.Services.Configure<CorreoOptions>(builder.Configuration.GetSection("Correo"));
+
             // Registrar los servicios de la aplicación
+            builder.Services.AddScoped<ICorreoService, CorreoService>();
+            builder.Services.AddScoped<AdminService>();
+            builder.Services.AddScoped<IAdminService, AdminServiceConCorreo>();
             builder.Services.AddScoped<ICocinaService, CocinaService>();
             builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
-            builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             // Configurar Autenticación basada en Cookies
