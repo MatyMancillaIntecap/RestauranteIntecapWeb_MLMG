@@ -20,28 +20,34 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
         }
 
         // Muestra el Dashboard Principal con KPIs
-        public async Task<IActionResult> Index(DateTime? fechaFiltro)
+        public async Task<IActionResult> Index(DateTime? fechaInicio, DateTime? fechaFin)
         {
-            // Llamamos a los métodos del servicio que creamos previamente, 
-            // pasando opcionalmente el filtro de fecha seleccionado por el administrador.
-            ViewBag.DietaSolicitados = await _empleadoService.ObtenerPlatillosDietaSolicitadosHoyAsync(fechaFiltro);
-            ViewBag.DietaIniciales = await _empleadoService.ObtenerPlatillosDietaInicialesHoyAsync(fechaFiltro);
+            var inicio = (fechaInicio ?? fechaFin ?? DateTime.Today).Date;
+            var fin = (fechaFin ?? fechaInicio ?? DateTime.Today).Date;
 
-            ViewBag.NormalesSolicitados = await _empleadoService.ObtenerPlatillosNormalesSolicitadosHoyAsync(fechaFiltro);
-            ViewBag.NormalesIniciales = await _empleadoService.ObtenerPlatillosNormalesInicialesHoyAsync(fechaFiltro);
+            if (inicio > fin)
+            {
+                (inicio, fin) = (fin, inicio);
+            }
 
-            ViewBag.VentasHoy = await _empleadoService.ObtenerVentasTotalesHoyAsync(fechaFiltro);
-            ViewBag.ReservasHoy = await _empleadoService.ObtenerTotalReservasHoyAsync(fechaFiltro);
+            ViewBag.DietaSolicitados = await _empleadoService.ObtenerPlatillosDietaSolicitadosHoyAsync(inicio, fin);
+            ViewBag.DietaIniciales = await _empleadoService.ObtenerPlatillosDietaInicialesHoyAsync(inicio, fin);
 
-            int usuariosConReserva = await _empleadoService.ObtenerUsuariosConReservasHoyAsync(fechaFiltro);
+            ViewBag.NormalesSolicitados = await _empleadoService.ObtenerPlatillosNormalesSolicitadosHoyAsync(inicio, fin);
+            ViewBag.NormalesIniciales = await _empleadoService.ObtenerPlatillosNormalesInicialesHoyAsync(inicio, fin);
+
+            ViewBag.VentasHoy = await _empleadoService.ObtenerVentasTotalesHoyAsync(inicio, fin);
+            ViewBag.ReservasHoy = await _empleadoService.ObtenerTotalReservasHoyAsync(inicio, fin);
+
+            int usuariosConReserva = await _empleadoService.ObtenerUsuariosConReservasHoyAsync(inicio, fin);
             int totalUsuarios = await _empleadoService.ObtenerTotalUsuariosRegistradosAsync();
 
             // Formateamos el texto tal como lo pediste: "X con reservas hoy / Y registrados"
             ViewBag.TextoUsuarios = $"{usuariosConReserva} con reservas hoy / {totalUsuarios} registrados";
             ViewBag.SolicitudesPasswordPendientes = await _adminService.ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
 
-            // Mantenemos la fecha actual o seleccionada para el formulario de filtro en la vista
-            ViewBag.FechaFiltroSeleccionada = fechaFiltro?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
+            ViewBag.FechaInicioSeleccionada = inicio.ToString("yyyy-MM-dd");
+            ViewBag.FechaFinSeleccionada = fin.ToString("yyyy-MM-dd");
 
             return View();
         }

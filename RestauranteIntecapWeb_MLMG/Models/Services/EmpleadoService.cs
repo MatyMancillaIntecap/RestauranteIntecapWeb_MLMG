@@ -364,68 +364,79 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
         // --- IMPLEMENTACIÓN CORREGIDA DE MÉTODOS ESTADÍSTICOS PARA EL DASHBOARD ---
 
-        // 1. Platillos de Dieta Solicitados (Suma de cantidades en reservas activas de platos con es_dieta = true)
-        public async Task<int> ObtenerPlatillosDietaSolicitadosHoyAsync(DateTime? fechaFiltro = null)
+        private static (DateTime Inicio, DateTime Fin) ResolverRangoFechas(DateTime? fechaInicio, DateTime? fechaFin)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
+            var inicio = (fechaInicio ?? fechaFin ?? DateTime.Today).Date;
+            var fin = (fechaFin ?? fechaInicio ?? DateTime.Today).Date;
+
+            if (inicio > fin)
+            {
+                (inicio, fin) = (fin, inicio);
+            }
+
+            return (inicio, fin);
+        }
+
+        // 1. Platillos de Dieta Solicitados (Suma de cantidades en reservas activas de platos con es_dieta = true)
+        public async Task<int> ObtenerPlatillosDietaSolicitadosHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.Reservas
                 .Include(r => r.MenuDiario)
-                .Where(r => r.fecha_consumo.Date == fecha && r.estado == "Activa" && r.MenuDiario != null && r.MenuDiario.es_dieta)
+                .Where(r => r.fecha_consumo.Date >= inicio && r.fecha_consumo.Date <= fin && r.estado == "Activa" && r.MenuDiario != null && r.MenuDiario.es_dieta)
                 .SumAsync(r => (int?)r.cantidad) ?? 0;
         }
 
-        // 2. Stock Inicial de Dieta (Suma del stock inicial registrado en el menú del día)
-        public async Task<int> ObtenerPlatillosDietaInicialesHoyAsync(DateTime? fechaFiltro = null)
+        // 2. Stock Inicial de Dieta (Suma del stock inicial registrado en el menú del rango)
+        public async Task<int> ObtenerPlatillosDietaInicialesHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
-            // Si no tienes una columna 'stock_inicial', sumamos el stock actual más lo que se ha vendido, 
-            // o asumimos que 'stock' representa el inicial. Lo ideal es mostrar la suma del inventario del día.
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.MenusDiarios
-                .Where(m => m.fecha.Date == fecha && m.es_dieta)
+                .Where(m => m.fecha.Date >= inicio && m.fecha.Date <= fin && m.es_dieta)
                 .SumAsync(m => (int?)(m.stock + m.cantidad_solicitada)) ?? 0;
         }
 
         // 3. Platillos Normales Solicitados (Suma en reservas activas de platos con es_dieta = false)
-        public async Task<int> ObtenerPlatillosNormalesSolicitadosHoyAsync(DateTime? fechaFiltro = null)
+        public async Task<int> ObtenerPlatillosNormalesSolicitadosHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.Reservas
                 .Include(r => r.MenuDiario)
-                .Where(r => r.fecha_consumo.Date == fecha && r.MenuDiario != null && !r.MenuDiario.es_dieta)
+                .Where(r => r.fecha_consumo.Date >= inicio && r.fecha_consumo.Date <= fin && r.MenuDiario != null && !r.MenuDiario.es_dieta)
                 .SumAsync(r => (int?)r.cantidad) ?? 0;
         }
 
         // 4. Stock Inicial Normal
-        public async Task<int> ObtenerPlatillosNormalesInicialesHoyAsync(DateTime? fechaFiltro = null)
+        public async Task<int> ObtenerPlatillosNormalesInicialesHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.MenusDiarios
-                .Where(m => m.fecha.Date == fecha && !m.es_dieta)
+                .Where(m => m.fecha.Date >= inicio && m.fecha.Date <= fin && !m.es_dieta)
                 .SumAsync(m => (int?)(m.stock + m.cantidad_solicitada)) ?? 0;
         }
 
         // 5. Ventas Totales recalculadas de forma robusta por precio unitario del menú
-        public async Task<decimal> ObtenerVentasTotalesHoyAsync(DateTime? fechaFiltro = null)
+        public async Task<decimal> ObtenerVentasTotalesHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.Reservas
                 .Include(r => r.MenuDiario)
-                .Where(r => r.fecha_consumo.Date == fecha && r.estado == "Activa" && r.MenuDiario != null)
+                .Where(r => r.fecha_consumo.Date >= inicio && r.fecha_consumo.Date <= fin && r.estado == "Activa" && r.MenuDiario != null)
                 .SumAsync(r => (decimal?)(r.cantidad * r.MenuDiario.precio)) ?? 0m;
         }
 
-        public async Task<int> ObtenerTotalReservasHoyAsync(DateTime? fechaFiltro = null)
+        public async Task<int> ObtenerTotalReservasHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.Reservas
-                .CountAsync(r => r.fecha_consumo.Date == fecha && r.estado == "Activa");
+                .CountAsync(r => r.fecha_consumo.Date >= inicio && r.fecha_consumo.Date <= fin && r.estado == "Activa");
         }
 
-        public async Task<int> ObtenerUsuariosConReservasHoyAsync(DateTime? fechaFiltro = null)
+        public async Task<int> ObtenerUsuariosConReservasHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
-            var fecha = fechaFiltro?.Date ?? DateTime.Today;
+            var (inicio, fin) = ResolverRangoFechas(fechaInicio, fechaFin);
             return await _context.Reservas
-                .Where(r => r.fecha_consumo.Date == fecha && r.estado == "Activa")
+                .Where(r => r.fecha_consumo.Date >= inicio && r.fecha_consumo.Date <= fin && r.estado == "Activa")
                 .Select(r => r.usuario_id)
                 .Distinct()
                 .CountAsync();

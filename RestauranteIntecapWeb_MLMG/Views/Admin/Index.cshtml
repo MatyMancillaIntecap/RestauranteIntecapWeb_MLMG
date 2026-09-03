@@ -23,7 +23,7 @@
                     <div>
                         <span class="text-dark small fw-bold text-uppercase">🥗 Platillos de Dieta</span>
                         <h4 class="fw-bold text-dark mt-2 mb-0">
-                            @ViewBag.DietaSolicitados solicitados / @ViewBag.DietaIniciales iniciales
+                            @ViewBag.DietaSolicitados solicitados / @ViewBag.DietaIniciales publicados
                         </h4>
                     </div>
                     <div class="fs-1 text-primary">🌿</div>
@@ -38,7 +38,7 @@
                     <div>
                         <span class="text-dark small fw-bold text-uppercase">🍽️ Platillos Normales</span>
                         <h4 class="fw-bold text-dark mt-2 mb-0">
-                            @ViewBag.NormalesSolicitados solicitados / @ViewBag.NormalesIniciales iniciales
+                            @ViewBag.NormalesSolicitados solicitados / @ViewBag.NormalesIniciales publicados
                         </h4>
                     </div>
                     <div class="fs-1 text-success">🍛</div>
@@ -112,24 +112,19 @@
             <h5 class="mb-0 fw-bold">📊 Resumen Estadístico Detallado por Fecha</h5>
         </div>
         <div class="card-body">
-            <!-- Formulario de Filtro por Fecha -->
+            <!-- Formulario de Filtro por Rango de Fechas -->
             <form method="get" asp-action="Index" class="row g-3 align-items-end mb-4">
                 <div class="col-md-4 col-12">
-                    <label class="form-label small fw-bold">Seleccionar Fecha de Análisis:</label>
-                    <input type="date" name="fechaFiltro" class="form-control" value="@ViewBag.FechaFiltroSeleccionada" />
+                    <label class="form-label small fw-bold">Fecha inicio:</label>
+                    <input type="date" name="fechaInicio" class="form-control" value="@ViewBag.FechaInicioSeleccionada" />
+                </div>
+                <div class="col-md-4 col-12">
+                    <label class="form-label small fw-bold">Fecha fin:</label>
+                    <input type="date" name="fechaFin" class="form-control" value="@ViewBag.FechaFinSeleccionada" />
                 </div>
                 <div class="col-md-2 col-12">
                     <button type="submit" class="btn btn-dark w-100 fw-bold">🔍 Filtrar</button>
                 </div>
-
-
-
-
-
-            
-
-
-
             </form>
 
             <hr />

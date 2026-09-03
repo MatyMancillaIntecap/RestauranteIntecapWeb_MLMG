@@ -36,13 +36,13 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // =========================================================================
         // NUEVOS MÉTODOS PARA ESTADÍSTICAS DEL PANEL (DASHBOARD Y RESUMEN)
         // =========================================================================
-        Task<int> ObtenerPlatillosDietaSolicitadosHoyAsync(DateTime? fechaFiltro = null);
-        Task<int> ObtenerPlatillosDietaInicialesHoyAsync(DateTime? fechaFiltro = null);
-        Task<int> ObtenerPlatillosNormalesSolicitadosHoyAsync(DateTime? fechaFiltro = null);
-        Task<int> ObtenerPlatillosNormalesInicialesHoyAsync(DateTime? fechaFiltro = null);
-        Task<decimal> ObtenerVentasTotalesHoyAsync(DateTime? fechaFiltro = null);
-        Task<int> ObtenerTotalReservasHoyAsync(DateTime? fechaFiltro = null);
-        Task<int> ObtenerUsuariosConReservasHoyAsync(DateTime? fechaFiltro = null);
+        Task<int> ObtenerPlatillosDietaSolicitadosHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
+        Task<int> ObtenerPlatillosDietaInicialesHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
+        Task<int> ObtenerPlatillosNormalesSolicitadosHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
+        Task<int> ObtenerPlatillosNormalesInicialesHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
+        Task<decimal> ObtenerVentasTotalesHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
+        Task<int> ObtenerTotalReservasHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
+        Task<int> ObtenerUsuariosConReservasHoyAsync(DateTime? fechaInicio = null, DateTime? fechaFin = null);
         Task<int> ObtenerTotalUsuariosRegistradosAsync();
     }
 }
