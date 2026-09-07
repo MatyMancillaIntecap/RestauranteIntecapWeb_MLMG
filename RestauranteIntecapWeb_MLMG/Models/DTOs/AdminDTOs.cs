@@ -36,6 +36,8 @@
         public string EmailUsuario { get; set; } = null!;
         public DateTime FechaSolicitud { get; set; }
         public DateTime? FechaAtencion { get; set; }
+        public int? UsuarioAdminId { get; set; }
+        public string? NombreAdminAtendio { get; set; }
         public string Estado { get; set; } = "Pendiente";
     }
 

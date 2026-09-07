@@ -27,6 +27,18 @@ namespace RestauranteIntecapWeb_MLMG.Data
             modelBuilder.Entity<Reserva>().ToTable("reservas");
             modelBuilder.Entity<HistorialLogin>().ToTable("historial_login");
             modelBuilder.Entity<SolicitudRestablecimientoPassword>().ToTable("solicitudes_restablecimiento_password");
+
+            modelBuilder.Entity<SolicitudRestablecimientoPassword>()
+                .HasOne(s => s.Usuario)
+                .WithMany()
+                .HasForeignKey(s => s.usuario_id)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SolicitudRestablecimientoPassword>()
+                .HasOne(s => s.UsuarioAdmin)
+                .WithMany()
+                .HasForeignKey(s => s.usuario_admin_id)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

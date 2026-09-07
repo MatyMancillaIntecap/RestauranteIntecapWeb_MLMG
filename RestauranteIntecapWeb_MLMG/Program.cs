@@ -4,6 +4,7 @@ using RestauranteIntecapWeb_MLMG.Data;
 using RestauranteIntecapWeb_MLMG.Models.Configuration;
 using RestauranteIntecapWeb_MLMG.Services;
 using QuestPDF.Infrastructure;
+using RestauranteIntecapWeb_MLMG.Models.Services;
 
 namespace RestauranteIntecapWeb_MLMG
 {
@@ -22,7 +23,7 @@ namespace RestauranteIntecapWeb_MLMG
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSQL")));
 
             // Configuración de correo (se completa por appsettings o variables de entorno)
-            builder.Services.Configure<CorreoOptions>(builder.Configuration.GetSection("Correo"));
+            builder.Services.Configure<CorreoOptions>(builder.Configuration.GetSection("CorreoSettings"));
 
             // Registrar los servicios de la aplicación
             builder.Services.AddScoped<ICorreoService, CorreoService>();

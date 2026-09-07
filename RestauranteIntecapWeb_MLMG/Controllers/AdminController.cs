@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestauranteIntecapWeb_MLMG.Models.DTOs;
 using RestauranteIntecapWeb_MLMG.Services;
@@ -12,7 +13,10 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
         private readonly ICocinaService _cocinaService;
         private readonly IEmpleadoService _empleadoService;
 
-        public AdminController(IAdminService adminService, ICocinaService cocinaService, IEmpleadoService empleadoService)
+        public AdminController(
+            IAdminService adminService,
+            ICocinaService cocinaService,
+            IEmpleadoService empleadoService)
         {
             _adminService = adminService;
             _cocinaService = cocinaService;
@@ -42,7 +46,6 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             int usuariosConReserva = await _empleadoService.ObtenerUsuariosConReservasHoyAsync(inicio, fin);
             int totalUsuarios = await _empleadoService.ObtenerTotalUsuariosRegistradosAsync();
 
-            // Formateamos el texto tal como lo pediste: "X con reservas hoy / Y registrados"
             ViewBag.TextoUsuarios = $"{usuariosConReserva} con reservas hoy / {totalUsuarios} registrados";
             ViewBag.SolicitudesPasswordPendientes = await _adminService.ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
 
@@ -111,6 +114,7 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             return View(solicitudes);
         }
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AtenderSolicitudRestablecimiento(AtenderSolicitudRestablecimientoDTO dto)
@@ -121,10 +125,14 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
                 return RedirectToAction(nameof(SolicitudesRestablecimiento));
             }
 
-            var solicitud = (await _adminService.ObtenerSolicitudesRestablecimientoAsync())
-                .FirstOrDefault(s => s.Id == dto.SolicitudId);
+            var adminIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(adminIdClaim, out var adminUsuarioId) || adminUsuarioId <= 0)
+            {
+                TempData["Error"] = "No se pudo identificar al administrador autenticado.";
+                return RedirectToAction(nameof(SolicitudesRestablecimiento));
+            }
 
-            var (exito, mensaje) = await _adminService.AtenderSolicitudRestablecimientoAsync(dto);
+            var (exito, mensaje) = await _adminService.AtenderSolicitudRestablecimientoAsync(dto, adminUsuarioId);
 
             if (!exito)
             {
@@ -132,16 +140,20 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
                 return RedirectToAction(nameof(SolicitudesRestablecimiento));
             }
 
-            TempData["Exito"] = LimpiarPrefijoMensaje(mensaje);
-
-            if (solicitud != null)
+            if (mensaje.StartsWith("WARN:"))
             {
-                TempData["CorreoAsunto"] = "Restablecimiento de contraseña – Restaurante Escuela INTECAP";
-                TempData["CorreoCuerpo"] = ConstruirCorreoCopiable(solicitud.NombreUsuario, solicitud.EmailUsuario, dto.NuevaPassword);
+                TempData["Advertencia"] = LimpiarPrefijoMensaje(mensaje);
+            }
+            else
+            {
+                TempData["Exito"] = LimpiarPrefijoMensaje(mensaje);
             }
 
             return RedirectToAction(nameof(SolicitudesRestablecimiento));
         }
+
+
+
 
         private static string ConstruirCorreoCopiable(string nombreUsuario, string correoUsuario, string nuevaPassword)
         {
@@ -177,7 +189,6 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             return mensaje;
         }
 
-        // Action para exportar reporte Excel global filtrado
         [HttpGet]
         public async Task<IActionResult> DescargarReporteExcel([FromQuery] FiltroReporteAdminDTO filtro)
         {
@@ -187,7 +198,6 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             return File(bytesExcel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
         }
 
-        // Action para exportar reporte PDF global filtrado
         [HttpGet]
         public async Task<IActionResult> DescargarReportePdf([FromQuery] FiltroReporteAdminDTO filtro)
         {
@@ -197,9 +207,6 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             return File(bytesPdf, "application/pdf", nombreArchivo);
         }
 
-
-
-        // Endpoint GET para descargar la lista completa de usuarios en Excel
         [HttpGet]
         public async Task<IActionResult> DescargarUsuariosExcel()
         {
@@ -209,7 +216,6 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             return File(bytesExcel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
         }
 
-        // Endpoint GET para descargar la lista completa de usuarios en PDF
         [HttpGet]
         public async Task<IActionResult> DescargarUsuariosPdf()
         {
@@ -219,17 +225,9 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             return File(bytesPdf, "application/pdf", nombreArchivo);
         }
 
-
-
-
-
-
-
-
         [HttpGet]
         public async Task<IActionResult> DescargarExcelAdmin(DateTime? fechaFiltro)
         {
-            // Reutilizamos la lógica del servicio para generar los bytes del Excel filtrado por fecha
             var archivoBytes = await _empleadoService.GenerarExcelHistorialFiltradoAsync(0, fechaFiltro, fechaFiltro);
             return File(archivoBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"ReporteAdmin_{DateTime.Now:yyyyMMdd}.xlsx");
         }
@@ -240,6 +238,5 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             var archivoBytes = await _empleadoService.GenerarPdfHistorialFiltradoAsync(0, fechaFiltro, fechaFiltro);
             return File(archivoBytes, "application/pdf", $"ReporteAdmin_{DateTime.Now:yyyyMMdd}.pdf");
         }
-
     }
 }

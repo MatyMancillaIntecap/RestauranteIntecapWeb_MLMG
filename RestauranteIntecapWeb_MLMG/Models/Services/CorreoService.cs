@@ -1,11 +1,9 @@
 using System.Net;
 using System.Net.Mail;
-using System.Text;
 using Microsoft.Extensions.Options;
-using RestauranteIntecapWeb_MLMG.Models;
 using RestauranteIntecapWeb_MLMG.Models.Configuration;
 
-namespace RestauranteIntecapWeb_MLMG.Services
+namespace RestauranteIntecapWeb_MLMG.Models.Services
 {
     public class CorreoService : ICorreoService
     {
@@ -18,92 +16,97 @@ namespace RestauranteIntecapWeb_MLMG.Services
             _logger = logger;
         }
 
-        public async Task<(bool Exito, string Mensaje)> EnviarRestablecimientoPasswordAsync(Usuario usuario, string nuevaPasswordTemporal)
+        public async Task<bool> EnviarCorreoNotificacionCambioAsync(Usuario usuario, string nuevaContrasenaPlano)
         {
-            if (usuario == null)
-            {
-                return (false, "No se encontró la información del usuario para enviar el correo.");
-            }
+            string mensajeHtml = $"<h3>Hola, {usuario.nombre}</h3>" +
+                                 $"<p>Te informamos que tu contraseña ha sido actualizada exitosamente.</p>" +
+                                 $"<p>Tu nueva contraseña en texto plano es: <b>{nuevaContrasenaPlano}</b></p>" +
+                                 $"<p>Te recomendamos cambiarla al iniciar sesión.</p>";
 
-            if (string.IsNullOrWhiteSpace(usuario.email))
-            {
-                return (false, "El usuario no tiene un correo electrónico registrado.");
-            }
+            return await EnviarCorreoGenericoAsync(usuario.email, "Notificación de Cambio de Contraseña - Restaurante INTECAP", mensajeHtml);
+        }
 
-            var remitenteCorreo = string.IsNullOrWhiteSpace(_opciones.RemitenteCorreo)
-                ? _opciones.Usuario
-                : _opciones.RemitenteCorreo;
+        public async Task<bool> EnviarRestablecimientoPasswordAsync(Usuario usuario, string nuevaPasswordTemporal)
+        {
+            string mensajeHtml = $"<h3>Hola, {usuario.nombre}</h3>" +
+                                 $"<p>Has solicitado o un administrador ha reseteado tu contraseña.</p>" +
+                                 $"<p>Tus nuevas credenciales temporales son: <b>{nuevaPasswordTemporal}</b></p>";
 
-            if (string.IsNullOrWhiteSpace(_opciones.Host) ||
-                string.IsNullOrWhiteSpace(remitenteCorreo) ||
-                string.IsNullOrWhiteSpace(_opciones.Usuario) ||
-                string.IsNullOrWhiteSpace(_opciones.Contrasena))
-            {
-                return (false, "La configuración SMTP no está completa.");
-            }
+            return await EnviarCorreoGenericoAsync(usuario.email, "Notificación de Cambio de Contraseña...", mensajeHtml);
+        }
 
+        private async Task<bool> EnviarCorreoGenericoAsync(string destinatario, string asunto, string cuerpoHtml)
+        {
             try
             {
-                using var mensaje = new MailMessage();
-                mensaje.From = new MailAddress(remitenteCorreo, string.IsNullOrWhiteSpace(_opciones.RemitenteNombre) ? "Restaurante Escuela INTECAP" : _opciones.RemitenteNombre, Encoding.UTF8);
-                mensaje.To.Add(new MailAddress(usuario.email, usuario.nombre, Encoding.UTF8));
-                mensaje.Subject = "Restablecimiento de contraseña – Restaurante Escuela INTECAP";
-                mensaje.SubjectEncoding = Encoding.UTF8;
-                mensaje.BodyEncoding = Encoding.UTF8;
-                mensaje.IsBodyHtml = true;
-                mensaje.Body = ConstruirCuerpoCorreo(usuario, nuevaPasswordTemporal);
+                var remitente = string.IsNullOrWhiteSpace(_opciones.RemitenteCorreo)
+                    ? _opciones.Usuario
+                    : _opciones.RemitenteCorreo;
+
+                if (string.IsNullOrWhiteSpace(_opciones.Host) ||
+                    _opciones.Puerto <= 0 ||
+                    string.IsNullOrWhiteSpace(remitente) ||
+                    string.IsNullOrWhiteSpace(_opciones.Usuario) ||
+                    string.IsNullOrWhiteSpace(_opciones.Contrasena) ||
+                    string.IsNullOrWhiteSpace(destinatario))
+                {
+                    _logger.LogError("Configuración SMTP incompleta o destinatario vacío. Host:{Host} Puerto:{Puerto} UsuarioVacio:{UsuarioVacio} RemitenteVacio:{RemitenteVacio}",
+                        _opciones.Host,
+                        _opciones.Puerto,
+                        string.IsNullOrWhiteSpace(_opciones.Usuario),
+                        string.IsNullOrWhiteSpace(remitente));
+                    return false;
+                }
+
+                MailAddress fromAddress;
+                MailAddress toAddress;
+
+                try
+                {
+                    fromAddress = new MailAddress(remitente, string.IsNullOrWhiteSpace(_opciones.RemitenteNombre) ? "Restaurante INTECAP" : _opciones.RemitenteNombre);
+                    toAddress = new MailAddress(destinatario);
+                }
+                catch (FormatException ex)
+                {
+                    _logger.LogError(ex, "Formato de correo inválido. Remitente:{Remitente} Destinatario:{Destinatario}", remitente, destinatario);
+                    return false;
+                }
+
+                using var mensaje = new MailMessage
+                {
+                    From = fromAddress,
+                    Subject = asunto,
+                    Body = cuerpoHtml,
+                    IsBodyHtml = true,
+                    DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure
+                };
+
+                mensaje.To.Add(toAddress);
 
                 using var smtp = new SmtpClient(_opciones.Host, _opciones.Puerto)
                 {
                     EnableSsl = _opciones.UsarSsl,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_opciones.Usuario, _opciones.Contrasena),
+                    Timeout = 30000
                 };
 
-                if (!string.IsNullOrWhiteSpace(_opciones.Usuario))
-                {
-                    smtp.Credentials = new NetworkCredential(_opciones.Usuario, _opciones.Contrasena);
-                }
-
                 await smtp.SendMailAsync(mensaje);
-                return (true, "Correo enviado correctamente.");
+                _logger.LogInformation("Correo aceptado por SMTP. De:{Remitente} Para:{Destinatario} Asunto:{Asunto}", remitente, destinatario, asunto);
+                return true;
+            }
+            catch (SmtpException ex)
+            {
+                _logger.LogError(ex, "SMTP rechazó el correo. Codigo:{StatusCode} Mensaje:{Mensaje}", ex.StatusCode, ex.Message);
+                return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al enviar el correo de restablecimiento para el usuario {UsuarioId}", usuario.id);
-                return (false, "No se pudo enviar el correo de notificación.");
+                _logger.LogError(ex, "ERROR SMTP DETALLADO: {MensajeError}", ex.Message);
+                System.Diagnostics.Debug.WriteLine($"EXCEPCIÓN SMTP REAL: {ex}");
+                return false;
             }
-        }
-
-        private static string ConstruirCuerpoCorreo(Usuario usuario, string nuevaPasswordTemporal)
-        {
-            static string E(string? valor) => System.Net.WebUtility.HtmlEncode(valor ?? string.Empty);
-
-            return $@"<!DOCTYPE html>
-<html lang='es'>
-<head>
-  <meta charset='utf-8' />
-  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-</head>
-<body style='font-family: Arial, Helvetica, sans-serif; color: #1f2937; line-height: 1.6; background-color: #f8fafc; margin: 0; padding: 0;'>
-  <div style='max-width: 640px; margin: 0 auto; padding: 24px;'>
-    <div style='background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 28px;'>
-      <h2 style='color: #0d6efd; margin-top: 0;'>Restablecimiento de contraseña – Restaurante Escuela INTECAP</h2>
-      <p>Estimado/a <strong>{E(usuario.nombre)}</strong>:</p>
-      <p>Le informamos que su contraseña de acceso al sistema <strong>Restaurante Escuela INTECAP</strong> ha sido restablecida exitosamente por el administrador.</p>
-      <p><strong>Sus nuevas credenciales de acceso son:</strong></p>
-      <div style='background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; margin: 16px 0;'>
-        <p style='margin: 0 0 8px 0;'><strong>Usuario:</strong> {E(usuario.nombre)}</p>
-        <p style='margin: 0 0 8px 0;'><strong>Correo:</strong> {E(usuario.email)}</p>
-        <p style='margin: 0;'><strong>Contraseña temporal:</strong> {E(nuevaPasswordTemporal)}</p>
-      </div>
-      <p>Le recomendamos mantener estas credenciales de forma segura y, si el sistema dispone de esta funcionalidad, cambiar la contraseña posteriormente.</p>
-      <p>Si usted no solicitó este cambio, por favor comuníquese con el administrador del sistema.</p>
-      <p>Saludos cordiales,<br/>Administración<br/>Restaurante Escuela INTECAP</p>
-    </div>
-  </div>
-</body>
-</html>";
         }
     }
 }

@@ -8,6 +8,7 @@ using QuestPDF.Infrastructure;
 using RestauranteIntecapWeb_MLMG.Data;
 using RestauranteIntecapWeb_MLMG.Models;
 using RestauranteIntecapWeb_MLMG.Models.DTOs;
+using RestauranteIntecapWeb_MLMG.Models.Services;
 
 namespace RestauranteIntecapWeb_MLMG.Services
 {
@@ -148,6 +149,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
         {
             return await _context.SolicitudesRestablecimientoPassword
                 .Include(s => s.Usuario)
+                .Include(s => s.UsuarioAdmin)
                 .OrderByDescending(s => s.fecha_solicitud)
                 .Select(s => new SolicitudRestablecimientoPasswordDTO
                 {
@@ -157,12 +159,14 @@ namespace RestauranteIntecapWeb_MLMG.Services
                     EmailUsuario = s.Usuario != null ? s.Usuario.email : string.Empty,
                     FechaSolicitud = s.fecha_solicitud,
                     FechaAtencion = s.fecha_atencion,
+                    UsuarioAdminId = s.usuario_admin_id,
+                    NombreAdminAtendio = s.UsuarioAdmin != null ? s.UsuarioAdmin.nombre : null,
                     Estado = s.estado
                 })
                 .ToListAsync();
         }
 
-        public async Task<(bool Exito, string Mensaje)> AtenderSolicitudRestablecimientoAsync(AtenderSolicitudRestablecimientoDTO dto)
+        public async Task<(bool Exito, string Mensaje)> AtenderSolicitudRestablecimientoAsync(AtenderSolicitudRestablecimientoDTO dto, int adminUsuarioId)
         {
             if (string.IsNullOrWhiteSpace(dto.NuevaPassword))
             {
@@ -193,9 +197,15 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 return (false, "El usuario se encuentra desactivado.");
             }
 
+            if (solicitud.usuario_id == adminUsuarioId)
+            {
+                return (false, "No puedes atender tu propia solicitud de contraseña.");
+            }
+
             solicitud.Usuario.password = _passwordHasher.HashPassword(solicitud.Usuario, dto.NuevaPassword);
             solicitud.estado = "Atendida";
             solicitud.fecha_atencion = DateTime.Now;
+            solicitud.usuario_admin_id = adminUsuarioId;
 
             await _context.SaveChangesAsync();
             return (true, "La contraseña se actualizó correctamente y la solicitud quedó como atendida.");

@@ -14,7 +14,7 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // Solicitudes de restablecimiento de contraseña
         Task<int> ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
         Task<List<SolicitudRestablecimientoPasswordDTO>> ObtenerSolicitudesRestablecimientoAsync();
-        Task<(bool Exito, string Mensaje)> AtenderSolicitudRestablecimientoAsync(AtenderSolicitudRestablecimientoDTO dto);
+        Task<(bool Exito, string Mensaje)> AtenderSolicitudRestablecimientoAsync(AtenderSolicitudRestablecimientoDTO dto, int adminUsuarioId);
 
         // NUEVOS MÉTODOS AVANZADOS PARA ADMINISTRACIÓN
         Task<DashboardDTO> ObtenerMétricasDashboardAsync();

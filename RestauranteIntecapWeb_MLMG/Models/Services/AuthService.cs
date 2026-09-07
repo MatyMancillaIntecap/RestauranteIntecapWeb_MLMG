@@ -69,19 +69,19 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // Crea una solicitud de restablecimiento de contraseña para un usuario existente
         public async Task<(bool Exito, string Mensaje)> CrearSolicitudRestablecimientoAsync(SolicitudRestablecimientoInputDTO model)
         {
-            var identificador = model.Identificador?.Trim().ToLower();
+            var correo = model.Identificador?.Trim().ToLower();
 
-            if (string.IsNullOrWhiteSpace(identificador))
+            if (string.IsNullOrWhiteSpace(correo) || !correo.Contains('@'))
             {
-                return (false, "Por favor, ingresa un correo electrónico o nombre de usuario válido.");
+                return (false, "Ingresa el correo electrónico registrado para solicitar el restablecimiento.");
             }
 
             var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.email.ToLower() == identificador || u.nombre.ToLower() == identificador);
+                .FirstOrDefaultAsync(u => u.email.ToLower() == correo);
 
             if (usuario == null)
             {
-                return (false, "No se encontró un usuario que coincida con el dato ingresado.");
+                return (false, "No se encontró un usuario con ese correo electrónico.");
             }
 
             if (!usuario.activo)

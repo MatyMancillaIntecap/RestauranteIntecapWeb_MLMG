@@ -169,6 +169,8 @@ namespace RestauranteIntecapWeb_MLMG.Models
 
         public int usuario_id { get; set; }
 
+        public int? usuario_admin_id { get; set; }
+
         [Required]
         [StringLength(20)]
         public string estado { get; set; } = "Pendiente";
@@ -179,5 +181,8 @@ namespace RestauranteIntecapWeb_MLMG.Models
 
         [ForeignKey("usuario_id")]
         public virtual Usuario? Usuario { get; set; }
+
+        [ForeignKey("usuario_admin_id")]
+        public virtual Usuario? UsuarioAdmin { get; set; }
     }
 }
