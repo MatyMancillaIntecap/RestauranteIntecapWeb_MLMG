@@ -25,6 +25,8 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
         public Task<UsuarioEdicionDTO?> ObtenerUsuarioPorIdAsync(int id) => _adminService.ObtenerUsuarioPorIdAsync(id);
 
+        public Task<UsuarioAdminDTO?> ObtenerUsuarioPorCorreoAsync(string correo) => _adminService.ObtenerUsuarioPorCorreoAsync(correo);
+
         public Task<(bool Exito, string Mensaje)> GuardarUsuarioAsync(UsuarioEdicionDTO usuarioDto) => _adminService.GuardarUsuarioAsync(usuarioDto);
 
         public Task<bool> CambiarEstadoUsuarioAsync(int id, bool activo) => _adminService.CambiarEstadoUsuarioAsync(id, activo);

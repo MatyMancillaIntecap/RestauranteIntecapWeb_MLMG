@@ -19,6 +19,8 @@ namespace RestauranteIntecapWeb_MLMG.Services
         // NUEVOS MÉTODOS AVANZADOS PARA ADMINISTRACIÓN
         Task<DashboardDTO> ObtenerMétricasDashboardAsync();
         Task<DetalleUsuarioCompletoDTO?> ObtenerDetalleCompletoUsuarioAsync(int usuarioId);
+        // Obtener usuario por correo electrónico (si existe)
+        Task<UsuarioAdminDTO?> ObtenerUsuarioPorCorreoAsync(string correo);
         Task<byte[]> GenerarReporteGlobalExcelAsync(FiltroReporteAdminDTO filtro);
         Task<byte[]> GenerarReporteGlobalPdfAsync(FiltroReporteAdminDTO filtro);
 

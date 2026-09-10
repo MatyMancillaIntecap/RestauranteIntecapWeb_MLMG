@@ -56,9 +56,23 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
         }
 
         // Muestra la lista de usuarios
-        public async Task<IActionResult> Usuarios()
+        public async Task<IActionResult> Usuarios(string? correo)
         {
-            var usuarios = await _adminService.ObtenerTodosLosUsuariosAsync();
+            List<UsuarioAdminDTO> usuarios;
+
+            if (!string.IsNullOrWhiteSpace(correo))
+            {
+                var usuario = await _adminService.ObtenerUsuarioPorCorreoAsync(correo);
+                usuarios = usuario != null
+                    ? new List<UsuarioAdminDTO> { usuario }
+                    : new List<UsuarioAdminDTO>();
+                ViewBag.EmailBusqueda = correo;
+            }
+            else
+            {
+                usuarios = await _adminService.ObtenerTodosLosUsuariosAsync();
+            }
+
             ViewBag.Roles = await _adminService.ObtenerRolesAsync();
             ViewBag.SolicitudesPasswordPendientes = await _adminService.ObtenerCantidadSolicitudesRestablecimientoPendientesAsync();
             return View(usuarios);

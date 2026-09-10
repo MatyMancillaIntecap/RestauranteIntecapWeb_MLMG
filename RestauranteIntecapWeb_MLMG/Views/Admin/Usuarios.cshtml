@@ -30,6 +30,17 @@
     </div>
 </div>
 
+<!-- BARRA DE BÚSQUEDA POR CORREO -->
+<div class="row mb-3">
+    <div class="col-md-6 col-12">
+        <form method="get" asp-action="Usuarios" class="d-flex gap-2">
+            <input type="email" name="correo" class="form-control" placeholder="Buscar por correo electrónico..." value="@(ViewBag.EmailBusqueda ?? "")" />
+            <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            <a asp-action="Usuarios" class="btn btn-outline-secondary">Limpiar</a>
+        </form>
+    </div>
+</div>
+
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show fw-bold" role="alert">

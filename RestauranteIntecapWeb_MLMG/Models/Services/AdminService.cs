@@ -22,6 +22,33 @@ namespace RestauranteIntecapWeb_MLMG.Services
             _context = context;
         }
 
+        // 1.b OBTENER USUARIO POR CORREO ELECTRÓNICO
+        public async Task<UsuarioAdminDTO?> ObtenerUsuarioPorCorreoAsync(string correo)
+        {
+            if (string.IsNullOrWhiteSpace(correo)) return null;
+
+            var correoTrim = correo.Trim().ToLower();
+
+            var user = await _context.Usuarios
+                .Include(u => u.Rol)
+                .Where(u => (u.email ?? "").ToLower() == correoTrim)
+                .Select(u => new UsuarioAdminDTO
+                {
+                    Id = u.id,
+                    Nombre = u.nombre,
+                    Email = u.email,
+                    RolId = u.rol_id,
+                    NombreRol = u.Rol!.nombre,
+                    Activo = u.activo,
+                    NitFacturacion = u.nit_facturacion,
+                    MaxAlmuerzosPermitidos = u.Rol.max_almuerzos,
+                    FechaCreacion = u.fecha_creacion
+                })
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+
         // 1. OBTENER TODOS LOS USUARIOS (Ordenados predeterminadamente de la A a la Z por Nombre)
         public async Task<List<UsuarioAdminDTO>> ObtenerTodosLosUsuariosAsync()
         {
