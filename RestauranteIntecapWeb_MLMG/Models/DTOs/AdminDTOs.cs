@@ -47,6 +47,14 @@
         public string Identificador { get; set; } = null!;
     }
 
+    // DTO para que el usuario cambie su propia contraseña
+    public class CambiarContrasenaDTO
+    {
+        public string ContrasenaActual { get; set; } = null!;
+        public string NuevaContrasena { get; set; } = null!;
+        public string ConfirmarContrasena { get; set; } = null!;
+    }
+
     // DTO para que el administrador asigne una nueva contraseña
     public class AtenderSolicitudRestablecimientoDTO
     {
@@ -54,6 +62,3 @@
         public string NuevaPassword { get; set; } = null!;
     }
 }
-
-
-

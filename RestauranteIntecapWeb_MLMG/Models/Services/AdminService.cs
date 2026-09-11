@@ -102,18 +102,16 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 return (false, "El correo electrónico ya está registrado por otro usuario.");
             }
 
+            const string CONTRASENA_INICIAL = "12345678";
+
             if (dto.Id == 0)
             {
-                if (string.IsNullOrWhiteSpace(dto.Password))
-                {
-                    return (false, "La contraseña es obligatoria para nuevos usuarios.");
-                }
-
+                // NUEVO USUARIO: Asignar automáticamente la contraseña inicial
                 var nuevoUsuario = new Usuario
                 {
                     nombre = dto.Nombre,
                     email = dto.Email,
-                    password = _passwordHasher.HashPassword(new Usuario { email = dto.Email, nombre = dto.Nombre }, dto.Password),
+                    password = _passwordHasher.HashPassword(new Usuario { email = dto.Email, nombre = dto.Nombre }, CONTRASENA_INICIAL),
                     rol_id = dto.RolId,
                     activo = dto.Activo,
                     nit_facturacion = string.IsNullOrWhiteSpace(dto.NitFacturacion) ? "C/F" : dto.NitFacturacion.Trim(),
@@ -121,9 +119,14 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 };
 
                 _context.Usuarios.Add(nuevoUsuario);
+                await _context.SaveChangesAsync();
+
+                // Guardar la contraseña inicial en TempData para mostrarla en la vista
+                return (true, $"CONTRASENA_INICIAL:{CONTRASENA_INICIAL}|Usuario y límites guardados correctamente.");
             }
             else
             {
+                // USUARIO EXISTENTE: Permitir cambio de contraseña solo si se proporciona
                 var usuarioExistente = await _context.Usuarios.FindAsync(dto.Id);
                 if (usuarioExistente == null) return (false, "El usuario no existe.");
 
@@ -143,9 +146,10 @@ namespace RestauranteIntecapWeb_MLMG.Services
                 {
                     rolAsociado.max_almuerzos = dto.MaxAlmuerzos;
                 }
+
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return (true, "Usuario y límites guardados correctamente.");
         }
 
@@ -195,10 +199,8 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
         public async Task<(bool Exito, string Mensaje)> AtenderSolicitudRestablecimientoAsync(AtenderSolicitudRestablecimientoDTO dto, int adminUsuarioId)
         {
-            if (string.IsNullOrWhiteSpace(dto.NuevaPassword))
-            {
-                return (false, "La nueva contraseña es obligatoria.");
-            }
+            // CAMBIO: Usar contraseña temporal fija en lugar de la ingresada
+            const string CONTRASENA_RESTABLECIDA = "87654321";
 
             var solicitud = await _context.SolicitudesRestablecimientoPassword
                 .Include(s => s.Usuario)
@@ -206,36 +208,39 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
             if (solicitud == null)
             {
-                return (false, "La solicitud no existe.");
+                return (false, "ERR:La solicitud no existe.");
             }
 
             if (solicitud.estado != "Pendiente")
             {
-                return (false, "La solicitud ya fue atendida o no está disponible.");
+                return (false, "ERR:La solicitud ya fue atendida o no está disponible.");
             }
 
             if (solicitud.Usuario == null)
             {
-                return (false, "No se pudo identificar al usuario asociado a la solicitud.");
+                return (false, "ERR:No se pudo identificar al usuario asociado a la solicitud.");
             }
 
             if (!solicitud.Usuario.activo)
             {
-                return (false, "El usuario se encuentra desactivado.");
+                return (false, "ERR:El usuario se encuentra desactivado.");
             }
 
             if (solicitud.usuario_id == adminUsuarioId)
             {
-                return (false, "No puedes atender tu propia solicitud de contraseña.");
+                return (false, "ERR:No puedes atender tu propia solicitud de contraseña.");
             }
 
-            solicitud.Usuario.password = _passwordHasher.HashPassword(solicitud.Usuario, dto.NuevaPassword);
-            solicitud.estado = "Atendida";
+            // CAMBIO: Asignar contraseña temporal fija y marcar como REALIZADO
+            solicitud.Usuario.password = _passwordHasher.HashPassword(solicitud.Usuario, CONTRASENA_RESTABLECIDA);
+            solicitud.estado = "Realizado";
             solicitud.fecha_atencion = DateTime.Now;
             solicitud.usuario_admin_id = adminUsuarioId;
 
             await _context.SaveChangesAsync();
-            return (true, "La contraseña se actualizó correctamente y la solicitud quedó como atendida.");
+
+            // Retornamos un mensaje con la contraseña temporal para que el admin pueda informar al usuario
+            return (true, $"OK:Contraseña restablecida a {CONTRASENA_RESTABLECIDA}. La solicitud ha sido marcada como Realizado.");
         }
 
         // 6. MÉTRICAS PARA DASHBOARD

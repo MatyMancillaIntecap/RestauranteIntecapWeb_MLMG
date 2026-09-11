@@ -13,5 +13,8 @@ namespace RestauranteIntecapWeb_MLMG.Services
 
         // Crea una solicitud de restablecimiento de contraseña para un usuario existente
         Task<(bool Exito, string Mensaje)> CrearSolicitudRestablecimientoAsync(SolicitudRestablecimientoInputDTO model);
+
+        // Permite que un usuario autenticado cambie su propia contraseña
+        Task<(bool Exito, string Mensaje)> CambiarContrasenaAsync(int usuarioId, string contrasenaActual, string nuevaContrasena, string confirmarContrasena);
     }
 }

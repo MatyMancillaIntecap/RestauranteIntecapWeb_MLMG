@@ -5,6 +5,23 @@
 }
 
 <div class="container-fluid mt-3 mb-5">
+    <!-- ALERTAS DE TEMPDATA -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show fw-bold mb-4" role="alert">
+            ⚠️ @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show fw-bold mb-4" role="alert">
+            ✅ @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- ENCABEZADO -->
     <div class="row align-items-center mb-4">
         <div class="col-12">

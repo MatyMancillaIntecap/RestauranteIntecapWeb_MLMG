@@ -9,6 +9,23 @@
 }
 
 <div class="container-fluid mt-3 mb-5">
+    <!-- ALERTAS DE TEMPDATA -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show fw-bold mb-4" role="alert">
+            ⚠️ @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show fw-bold mb-4" role="alert">
+            ✅ @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- BARRA SUPERIOR Y FILTRO DE FECHA CON EXPORTACIONES -->
     <div class="card shadow-sm border-0 mb-4 rounded-3">
         <div class="card-body bg-light rounded-3 p-3">
@@ -103,10 +120,7 @@
                                             <label class="form-check-label" for="chkDieta">Es Dieta</label>
                                         </div>
                                     </div>
-                                    <div class="col-6">
-                                        <label class="form-label fw-bold small">Fecha Menú</label>
-                                        <input type="date" name="fecha" class="form-control" value="@fechaSel.ToString("yyyy-MM-dd")" required />
-                                    </div>
+                                    <!-- Fecha Menú eliminado por decisión de producto: no es necesario que el usuario la capture -->
                                 </div>
 
                                 <!-- CAMPO UNIFICADO DE HABILITACIÓN PROGRAMADA (Sin duplicidades) -->

@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RestauranteIntecapWeb_MLMG.Models.DTOs;
 using RestauranteIntecapWeb_MLMG.Services;
@@ -122,6 +123,58 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             ViewBag.Mensaje = mensaje;
             ModelState.Clear();
             return View(new SolicitudRestablecimientoInputDTO());
+        }
+
+        // Muestra el formulario para cambiar contraseña (GET) - Solo para usuarios autenticados
+        [Authorize]
+        [HttpGet]
+        public IActionResult CambiarPassword()
+        {
+            return View(new CambiarContrasenaDTO());
+        }
+
+        // Procesa el cambio de contraseña (POST) - Solo para usuarios autenticados
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CambiarPassword(CambiarContrasenaDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Obtener el ID del usuario autenticado
+            var usuarioIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(usuarioIdClaim, out var usuarioId) || usuarioId <= 0)
+            {
+                TempData["Error"] = "No se pudo identificar tu usuario autenticado.";
+                return View(model);
+            }
+
+            // Llamar al servicio para cambiar la contraseña
+            var (exito, mensaje) = await _authService.CambiarContrasenaAsync(
+                usuarioId,
+                model.ContrasenaActual,
+                model.NuevaContrasena,
+                model.ConfirmarContrasena);
+
+            if (!exito)
+            {
+                TempData["Error"] = mensaje;
+                return View(model);
+            }
+
+            // Si el cambio fue exitoso, guardar mensaje y redirigir según el rol
+            TempData["Exito"] = mensaje;
+            var rolUsuario = User.FindFirstValue(ClaimTypes.Role);
+
+            return rolUsuario switch
+            {
+                "Administrador" => RedirectToAction("Index", "Admin"),
+                "Cocina" => RedirectToAction("Index", "Cocina"),
+                _ => RedirectToAction("Index", "Empleado")
+            };
         }
     }
 }

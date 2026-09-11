@@ -122,5 +122,60 @@ namespace RestauranteIntecapWeb_MLMG.Services
             _context.HistorialLogins.Add(historial);
             await _context.SaveChangesAsync();
         }
+
+        // Permite que un usuario autenticado cambie su propia contraseña
+        public async Task<(bool Exito, string Mensaje)> CambiarContrasenaAsync(int usuarioId, string contrasenaActual, string nuevaContrasena, string confirmarContrasena)
+        {
+            // 1. Validaciones básicas
+            if (string.IsNullOrWhiteSpace(contrasenaActual))
+            {
+                return (false, "La contraseña actual es obligatoria.");
+            }
+
+            if (string.IsNullOrWhiteSpace(nuevaContrasena))
+            {
+                return (false, "La nueva contraseña es obligatoria.");
+            }
+
+            if (string.IsNullOrWhiteSpace(confirmarContrasena))
+            {
+                return (false, "Debe confirmar la nueva contraseña.");
+            }
+
+            if (nuevaContrasena != confirmarContrasena)
+            {
+                return (false, "Las contraseñas nuevas no coinciden.");
+            }
+
+            if (nuevaContrasena.Length < 8)
+            {
+                return (false, "La nueva contraseña debe tener al menos 8 caracteres.");
+            }
+
+            // 2. Buscar el usuario
+            var usuario = await _context.Usuarios.FindAsync(usuarioId);
+            if (usuario == null)
+            {
+                return (false, "Usuario no encontrado.");
+            }
+
+            // 3. Validar que la contraseña actual sea correcta
+            var verificacion = _passwordHasher.VerifyHashedPassword(usuario, usuario.password, contrasenaActual);
+
+            if (verificacion == PasswordVerificationResult.Failed)
+            {
+                // Compatibilidad temporal con texto plano
+                if (usuario.password != contrasenaActual)
+                {
+                    return (false, "La contraseña actual es incorrecta.");
+                }
+            }
+
+            // 4. Actualizar a la nueva contraseña (con hash)
+            usuario.password = _passwordHasher.HashPassword(usuario, nuevaContrasena);
+            await _context.SaveChangesAsync();
+
+            return (true, "Tu contraseña ha sido cambiada correctamente.");
+        }
     }
 }

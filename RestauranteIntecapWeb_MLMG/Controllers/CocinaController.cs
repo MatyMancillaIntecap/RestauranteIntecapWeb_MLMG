@@ -58,6 +58,12 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
                     menu.imagen_url = "/images/menus/" + fileName;
                 }
 
+                // Si el campo 'fecha' no fue enviado por el formulario, asignamos la fecha de hoy
+                if (menu.fecha == default(DateTime))
+                {
+                    menu.fecha = DateTime.Today;
+                }
+
                 // Usamos el servicio de cocina para guardar o actualizar
                 await _cocinaService.ActualizarMenuAsync(menu);
 

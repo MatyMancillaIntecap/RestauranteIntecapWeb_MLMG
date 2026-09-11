@@ -106,7 +106,18 @@ namespace RestauranteIntecapWeb_MLMG.Controllers
             }
             else
             {
-                TempData["Exito"] = mensaje;
+                // Verificar si el mensaje contiene la contraseña inicial
+                if (mensaje.Contains("CONTRASENA_INICIAL:"))
+                {
+                    var partes = mensaje.Split("|");
+                    var contrasenaInfo = partes[0].Replace("CONTRASENA_INICIAL:", "").Trim();
+                    TempData["ContraseñaInicial"] = contrasenaInfo;
+                    TempData["Exito"] = "✅ Usuario creado exitosamente. Contraseña inicial: " + contrasenaInfo;
+                }
+                else
+                {
+                    TempData["Exito"] = mensaje;
+                }
             }
 
             return RedirectToAction(nameof(Usuarios));

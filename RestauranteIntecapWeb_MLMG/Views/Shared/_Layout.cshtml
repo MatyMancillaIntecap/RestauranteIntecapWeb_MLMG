@@ -181,6 +181,9 @@
                                 <i class="bi bi-person-circle fs-5 me-2 text-warning"></i>
                                 <span class="fw-bold">@User.Identity.Name</span>
                             </div>
+                            <a asp-controller="Account" asp-action="CambiarPassword" class="nav-btn d-flex align-items-center gap-1">
+                                <i class="bi bi-key"></i> Cambiar Contraseña
+                            </a>
                             <a asp-controller="Account" asp-action="Logout" class="btn-logout d-flex align-items-center gap-1">
                                 <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
                             </a>
